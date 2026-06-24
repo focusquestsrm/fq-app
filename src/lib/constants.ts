@@ -24,14 +24,22 @@ export const ROLE_LABELS: Record<Role, string> = {
   auditor: "School Viewer",
 };
 
-export const NAV: { href: string; label: string; fqOnly?: boolean; usersNav?: boolean }[] = [
+export type NavItem = { href: string; label: string; fqOnly?: boolean; usersNav?: boolean };
+export type NavGroup = { group: string; items: NavItem[] };
+
+export const NAV: (NavItem | NavGroup)[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/revenue", label: "Revenue Model" },
   { href: "/programs", label: "Program Catalog" },
   { href: "/students", label: "Students" },
-  { href: "/schools", label: "Tenant Management", fqOnly: true },
-  { href: "/users", label: "Users & Permissions", usersNav: true },
-  { href: "/settings", label: "Configuration", fqOnly: true },
+  {
+    group: "Setup",
+    items: [
+      { href: "/schools", label: "Tenant Management", fqOnly: true },
+      { href: "/users", label: "Users & Permissions", usersNav: true },
+      { href: "/settings", label: "Configuration", fqOnly: true },
+    ],
+  },
 ];
 
 export const PALETTE = [

@@ -1,11 +1,18 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV } from "@/lib/constants";
+import { NAV, type NavItem, type NavGroup } from "@/lib/constants";
 
 export function Sidebar({ fq, canUsers }: { fq: boolean; canUsers: boolean }) {
   const path = usePathname();
-  const items = NAV.filter((n) => (n.fqOnly ? fq : n.usersNav ? canUsers : true));
+  const visible = (n: NavItem) => (n.fqOnly ? fq : n.usersNav ? canUsers : true);
+
+  const link = (n: NavItem) => (
+    <Link key={n.href} href={n.href} className={path === n.href ? "on" : ""}>
+      {n.label}
+    </Link>
+  );
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -14,11 +21,19 @@ export function Sidebar({ fq, canUsers }: { fq: boolean; canUsers: boolean }) {
         <div className="sub">Enrollment Intelligence</div>
       </div>
       <nav className="nav">
-        {items.map((n) => (
-          <Link key={n.href} href={n.href} className={path === n.href ? "on" : ""}>
-            {n.label}
-          </Link>
-        ))}
+        {NAV.map((n, i) => {
+          if ("group" in n) {
+            const items = (n as NavGroup).items.filter(visible);
+            if (items.length === 0) return null;
+            return (
+              <div key={n.group}>
+                <div className="grp">{n.group}</div>
+                {items.map(link)}
+              </div>
+            );
+          }
+          return visible(n as NavItem) ? link(n as NavItem) : null;
+        })}
       </nav>
       <div className="sidefoot">
         <span className="ferpa">✓ FERPA-aware · TX-RAMP track</span>
