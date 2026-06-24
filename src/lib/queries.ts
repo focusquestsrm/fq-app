@@ -16,13 +16,15 @@ export async function getTenants(): Promise<Tenant[]> {
   return (data as Tenant[]) ?? [];
 }
 
-// Which tenant the UI is scoped to. School users are pinned to their own;
-// FQ users can switch via the `scope` cookie.
+// Which tenant the UI is scoped to. School users are pinned to their own; FQ users
+// switch via the `scope` cookie and may choose "all" to view every school at once.
+// Returns a tenant id, the literal "all" (FQ aggregate), or null (no schools yet).
 export async function getScope(profile: Profile, tenants: Tenant[]): Promise<string | null> {
   if (profile.tenant_id) return profile.tenant_id;
   const cookieScope = cookies().get("scope")?.value;
+  if (cookieScope === "all") return "all";
   if (cookieScope && tenants.some((t) => t.id === cookieScope)) return cookieScope;
-  return tenants[0]?.id ?? null;
+  return tenants.length ? "all" : null; // FQ default: all schools
 }
 
 export async function getPrograms(tenantId?: string): Promise<Program[]> {

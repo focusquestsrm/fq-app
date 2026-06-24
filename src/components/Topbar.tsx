@@ -1,6 +1,6 @@
 import { isFQ, type Profile, type Tenant } from "@/lib/types";
 import { ROLE_LABELS } from "@/lib/constants";
-import { setScope } from "@/app/(app)/schools/actions";
+import { ScopePicker } from "@/components/ScopePicker";
 import { signOut } from "@/app/login/actions";
 
 export function Topbar({
@@ -14,16 +14,7 @@ export function Topbar({
     <div className="topbar">
       <div className="ttl">{ROLE_LABELS[profile.role]}</div>
       <div className="right">
-        {fq && tenants.length > 0 && (
-          <div className="scopepick">
-            {tenants.map((t) => (
-              <form key={t.id} action={setScope}>
-                <input type="hidden" name="scope" value={t.id} />
-                <button className={scope === t.id ? "on" : ""}>{t.short_code}</button>
-              </form>
-            ))}
-          </div>
-        )}
+        {fq && tenants.length > 0 && <ScopePicker tenants={tenants} scope={scope} />}
         <span className="rolechip">
           {fq ? "FOCUSQUEST" : tenants.find((t) => t.id === scope)?.short_code + " PORTAL"}
         </span>

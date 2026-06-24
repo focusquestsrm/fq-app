@@ -18,8 +18,10 @@ export default async function StudentsPage() {
   const scope = await getScope(profile, tenants);
   if (!scope) return <div className="empty">Create a school first (Tenant Management).</div>;
 
-  const programs = (await getPrograms(scope || undefined)).filter((p) => p.active);
-  const students = await getStudents(scope || undefined);
+  const all = scope === "all";
+  const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
+  const programs = (await getPrograms(all ? undefined : scope)).filter((p) => p.active);
+  const students = await getStudents(all ? undefined : scope);
   const payments = (await getConfig()).filter((c) => c.kind === "payment");
 
   return (
@@ -31,7 +33,9 @@ export default async function StudentsPage() {
 
       <div className="card">
         <h3>Add a Student</h3>
-        {programs.length === 0 ? (
+        {all ? (
+          <div className="callout">Showing students for <b>all schools</b>. Select a single school from the top bar to enroll a student.</div>
+        ) : programs.length === 0 ? (
           <div className="callout">Add at least one program in the Program Catalog before enrolling students.</div>
         ) : (
           <form action={addStudent} className="form">
@@ -68,7 +72,7 @@ export default async function StudentsPage() {
             {students.length === 0 && <tr><td colSpan={6}><div className="empty">No students yet.</div></td></tr>}
             {students.map((s) => (
               <tr key={s.id}>
-                <td><b>{s.first_name} {s.last_name}</b></td>
+                <td><b>{s.first_name} {s.last_name}</b>{all && <div className="muted" style={{ fontSize: 11 }}>{codeOf.get(s.tenant_id) ?? "—"}</div>}</td>
                 <td>{s.program || "—"}</td>
                 <td className="r money">{fmt(s.cost)}</td>
                 <td className="r money" style={{ color: "var(--green)" }}>{fmt(s.collected)}</td>

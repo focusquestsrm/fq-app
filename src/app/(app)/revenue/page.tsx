@@ -14,6 +14,7 @@ export default async function RevenuePage() {
   if (!profile) redirect("/login");
   const tenants = await getTenants();
   const scope = await getScope(profile, tenants);
+  if (scope === "all") return <div className="empty">Select a single school from the top bar to view its revenue model.</div>;
   const tenant = tenants.find((t) => t.id === scope);
   if (!tenant) return <div className="empty">Create a school first (Tenant Management).</div>;
 

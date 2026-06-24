@@ -57,6 +57,10 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; }
 .scopepick a, .scopepick form button { font-size: 12px; padding: 5px 10px; border-radius: 6px; color: #b8b6ad;
   background: none; border: none; cursor: pointer; }
 .scopepick a.on, .scopepick button.on { background: var(--gold); color: var(--ink); font-weight: 600; }
+.scopesel { font-size: 12px; padding: 6px 10px; border-radius: 8px; color: #EDEAE0;
+  background: #161618; border: 1px solid #2a2a2d; cursor: pointer; font-family: var(--font-body);
+  max-width: 220px; }
+.scopesel:focus { outline: none; border-color: var(--gold); }
 .rolechip { font-size: 11px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--gold); color: var(--gold); }
 .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--ink);
   display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; }

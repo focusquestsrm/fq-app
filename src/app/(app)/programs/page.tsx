@@ -13,7 +13,10 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
   const scope = await getScope(profile, tenants);
   if (!scope) return <div className="empty">Create a school first (Tenant Management).</div>;
 
-  const programs = await getPrograms(scope);
+  const all = scope === "all";
+  const canAdd = !all; // need a single school to attach a new program to
+  const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
+  const programs = await getPrograms(all ? undefined : scope);
   const config = await getConfig();
   const providers = config.filter((c) => c.kind === "provider");
   const categories = config.filter((c) => c.kind === "category");
@@ -34,10 +37,13 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
         <h2>Program Catalog</h2>
       </div>
 
+      {!canAdd && !editing ? (
+        <div className="card"><div className="callout">Showing programs for <b>all schools</b>. Select a single school from the top bar to add or edit a program.</div></div>
+      ) : (
       <div className="card">
         <h3>{editing ? "Edit Program" : "Add a Program"}</h3>
         <form action={saveProgram} className="form">
-          <input type="hidden" name="tenant_id" value={scope} />
+          <input type="hidden" name="tenant_id" value={editing ? editing.tenant_id : scope} />
           {editing && <input type="hidden" name="id" value={editing.id} />}
           <div className="frow f3">
             <div className="field"><label>Program name</label><input name="name" placeholder="e.g. Medical Assistant" defaultValue={editing?.name ?? ""} required /></div>
@@ -78,6 +84,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
           </div>
         </form>
       </div>
+      )}
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table>
@@ -86,7 +93,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
             {programs.length === 0 && <tr><td colSpan={7}><div className="empty">No programs yet — add your first above.</div></td></tr>}
             {programs.map((p) => (
               <tr key={p.id}>
-                <td><b>{p.name}</b><div className="muted" style={{ fontSize: 11 }}>{p.category || "—"}{p.funding?.length ? " · " + p.funding.join(", ") : ""}</div></td>
+                <td><b>{p.name}</b><div className="muted" style={{ fontSize: 11 }}>{all ? (codeOf.get(p.tenant_id) ?? "—") + " · " : ""}{p.category || "—"}{p.funding?.length ? " · " + p.funding.join(", ") : ""}</div></td>
                 <td>{p.provider || "—"}</td>
                 <td className="r"><InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /></td>
                 <td><span className={"chip " + (p.delivery === "Hybrid" ? "amber" : p.delivery === "In-person" ? "gray" : "blue")}>{p.delivery}</span></td>
