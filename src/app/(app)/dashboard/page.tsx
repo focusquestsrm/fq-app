@@ -41,7 +41,14 @@ export default async function DashboardPage() {
   const gross = enrolled.reduce((a, s) => a + s.cost, 0);
   const collected = enrolled.reduce((a, s) => a + s.collected, 0);
   const sp = splitFor(tenant);
-  const projected = programs.filter((p) => p.active).reduce((a, p) => a + p.goal * p.cost, 0);
+  const activePrograms = programs.filter((p) => p.active);
+  const projected = activePrograms.reduce((a, p) => a + p.goal * p.cost, 0);
+
+  // Enrolled students per program (match on id, falling back to name).
+  const progMetrics = activePrograms.map((p) => ({
+    p,
+    cnt: enrolled.filter((s) => s.program_id === p.id || (!s.program_id && s.program === p.name)).length,
+  }));
 
   return (
     <>
@@ -58,13 +65,40 @@ export default async function DashboardPage() {
       </div>
 
       <div className="card">
-        <h3>Revenue split of realized gross</h3>
+        <h3>Live Revenue Snapshot</h3>
         <div className="split">
           <div className="s1" style={{ width: pct(sp.school) }}>School {fmt(gross * sp.school)}</div>
           <div className="s2" style={{ width: pct(sp.provider) }}>Provider {fmt(gross * sp.provider)}</div>
           <div className="s3" style={{ width: pct(sp.fq) }}>FQ {fmt(gross * sp.fq)}</div>
         </div>
-        <div className="srcnote">All figures recalculate from the programs, students and split you enter — no hardcoded numbers.</div>
+        <div className="srcnote">
+          {fq
+            ? `Revenue figures are calculated based on the configured revenue-sharing model: School ${pct(sp.school)} | Provider ${pct(sp.provider)} | FocusQuest ${pct(sp.fq)}`
+            : `Revenue figures are calculated based on the configured revenue-sharing model: School ${pct(sp.school)}`}
+        </div>
+      </div>
+
+      <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+        <div style={{ padding: "16px 18px 0" }}><h3>Program performance — enrolled vs goal</h3></div>
+        <table>
+          <thead><tr><th>Program</th><th className="r">Enrolled</th><th className="r">Cohort goal</th><th>Progress</th></tr></thead>
+          <tbody>
+            {progMetrics.length === 0 && <tr><td colSpan={4}><div className="empty">No active programs yet.</div></td></tr>}
+            {progMetrics.map(({ p, cnt }) => {
+              const goal = p.goal || 0;
+              const fill = goal > 0 ? Math.round((cnt / goal) * 100) : 0;
+              const tone = goal === 0 ? "gray" : cnt >= goal ? "green" : fill >= 50 ? "amber" : "red";
+              return (
+                <tr key={p.id}>
+                  <td><b>{p.name}</b></td>
+                  <td className="r mono">{cnt}</td>
+                  <td className="r mono">{goal || "—"}</td>
+                  <td><span className={"chip " + tone}>{goal > 0 ? `${cnt} / ${goal} · ${fill}%` : `${cnt} enrolled`}</span></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </>
   );
