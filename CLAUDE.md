@@ -29,12 +29,16 @@ lives in `src/app/globals.css`; reuse those classes and CSS variables.
 | `--green / --amber / --red / --blue` | see file | status chips only |
 
 ### Typography
-- Display / headings (`h1,h2,h3`): **Georgia** serif via `--font-display`.
-- Body / UI: **Calibri** via `--font-body`. No Google Fonts, no other typefaces.
+- Display / headings (`h1,h2,h3`): **Montserrat** via `--font-display`.
+- Body / UI: **Public Sans** via `--font-body`. No other typefaces.
+- Both are loaded with `next/font/google` in `src/app/layout.tsx` (self-hosted,
+  exposed as `--font-montserrat` / `--font-public-sans`); `globals.css` maps the
+  `--font-display` / `--font-body` variables to them. Reference the variables,
+  never the family names directly.
 - Eyebrows above page titles: gold, uppercase, letter-spaced (`.eyebrow`).
 
 ### Identity
-- Logo: gold rounded square containing **"FQ"** in Georgia (`.logo`).
+- Logo: gold rounded square containing **"FQ"** in the display font (`.logo`).
 - Wordmark: "FocusQuest **Strata**" with "Strata" in gold (`.brand .wm b`).
 - Layout chrome: black sidebar (`.sidebar`) + black topbar with a **2px gold
   bottom border** (`.topbar`). Cream content area.

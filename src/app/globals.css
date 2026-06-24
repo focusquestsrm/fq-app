@@ -11,8 +11,8 @@
   --amber: #B0820F; --amber-soft: #F6EBCB;
   --red: #B23A2E; --red-soft: #F4E0DC;
   --blue: #2E5FA3;
-  --font-body: "Calibri", "Segoe UI", system-ui, sans-serif;
-  --font-display: "Georgia", "Times New Roman", serif;
+  --font-body: var(--font-public-sans), "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-montserrat), "Segoe UI", system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
