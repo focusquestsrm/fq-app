@@ -27,7 +27,6 @@ export default async function RevenuePage() {
       <div className="pagehead">
         <div className="eyebrow">Finance</div>
         <h2>Revenue model — {tenant.name}</h2>
-        <p>Enter the revenue split directly: the school % and the FocusQuest %. The provider share fills the remainder, and every total below recalculates from your numbers.</p>
       </div>
 
       {fq ? (

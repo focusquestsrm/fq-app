@@ -45,7 +45,6 @@ export default async function SettingsPage() {
       <div className="pagehead">
         <div className="eyebrow">Configuration</div>
         <h2>Manage your lists</h2>
-        <p>Nothing here is fixed — add or remove the options that appear across your forms. These are shared by every user in your organization.</p>
       </div>
       <div className="cards c2">
         <ListEditor title="Institution types" kind="type" items={by("type")} placeholder="HBCU" />

@@ -47,11 +47,6 @@ export default async function UsersPage() {
       <div className="pagehead">
         <div className="eyebrow">Administration</div>
         <h2>Users &amp; permissions</h2>
-        <p>
-          {fq
-            ? "Invite people to FocusQuest or any school and set their access. FocusQuest roles see every school; school roles are scoped to one institution."
-            : "Invite and manage the people at your school. You can grant school-level access only."}
-        </p>
       </div>
 
       {manage && (

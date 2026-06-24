@@ -18,7 +18,6 @@ export default async function SchoolsPage() {
       <div className="pagehead">
         <div className="eyebrow">Administration</div>
         <h2>Schools &amp; tenants</h2>
-        <p>Each school is an isolated tenant with its own students, programs, financials and users. Enter the revenue split directly — provider share is the remainder.</p>
       </div>
 
       <div className="card">

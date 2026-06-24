@@ -27,7 +27,6 @@ export default async function StudentsPage() {
       <div className="pagehead">
         <div className="eyebrow">Intelligence</div>
         <h2>Students</h2>
-        <p>Enter enrollments by hand or import them. Each student carries a journey stage, payment source and amount collected — feeding the revenue totals.</p>
       </div>
 
       <div className="card">

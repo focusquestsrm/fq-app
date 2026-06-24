@@ -63,7 +63,7 @@ h1, h2, h3 { font-family: var(--font-display); margin: 0; }
 
 .content { padding: 24px; max-width: 1180px; }
 .eyebrow { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold-deep); font-weight: 600; }
-.pagehead h2 { font-size: 24px; margin: 4px 0 6px; }
+.pagehead h2 { font-size: 19px; margin: 3px 0 16px; letter-spacing: -0.01em; }
 .pagehead p { color: var(--muted); margin: 0 0 18px; max-width: 760px; line-height: 1.5; }
 
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }

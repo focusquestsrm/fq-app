@@ -18,7 +18,6 @@ export default async function DashboardPage() {
         <div className="pagehead">
           <div className="eyebrow">Welcome</div>
           <h2>Let&apos;s set up your platform</h2>
-          <p>There&apos;s no sample data — this is your live workspace. Create your first school, then add its programs and costs.</p>
         </div>
         <div className="card">
           <h3>Get started</h3>
@@ -49,7 +48,6 @@ export default async function DashboardPage() {
       <div className="pagehead">
         <div className="eyebrow">{fq ? "FocusQuest" : tenant.short_code}</div>
         <h2>{tenant.name}</h2>
-        <p>Live snapshot. Revenue figures derive from your entered split ({pct(sp.school)} school / {pct(sp.provider)} provider / {pct(sp.fq)} FQ).</p>
       </div>
 
       <div className="cards c4">
