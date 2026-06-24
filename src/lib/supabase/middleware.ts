@@ -32,7 +32,10 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthPage = path.startsWith("/login");
-  const isPublicAsset = path.startsWith("/_next") || path === "/favicon.ico";
+  // /auth/* handles email-link activation for users who don't have a session yet
+  // (invite / password recovery), so it must be reachable unauthenticated.
+  const isPublicAsset =
+    path.startsWith("/_next") || path === "/favicon.ico" || path.startsWith("/auth");
 
   if (!user && !isAuthPage && !isPublicAsset) {
     const url = request.nextUrl.clone();
