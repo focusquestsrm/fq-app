@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 export async function setScope(formData: FormData) {
@@ -9,23 +10,28 @@ export async function setScope(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
-export async function createTenant(formData: FormData) {
+// Create a new school, or update an existing one when an `id` is present.
+export async function saveTenant(formData: FormData) {
   const supabase = createClient();
-  const school = Number(formData.get("school_share") || 40) / 100;
-  const fq = Number(formData.get("fq_share") || 20) / 100;
-  await supabase.from("tenants").insert({
+  const id = String(formData.get("id") || "");
+  const fields = {
     name: String(formData.get("name") || "").trim(),
     short_code: String(formData.get("short_code") || "").trim().toUpperCase(),
     type: String(formData.get("type") || "HBCU"),
-    school_share: school,
-    fq_share: fq,
+    school_share: Number(formData.get("school_share") || 40) / 100,
+    fq_share: Number(formData.get("fq_share") || 20) / 100,
     contact: String(formData.get("contact") || ""),
-    dsa: String(formData.get("dsa") || "Not started"),
-    billing: String(formData.get("billing") || "Prospect"),
-    live: true,
-  });
+  };
+  if (id) {
+    // Only the editable fields — leaves dsa/billing/live untouched.
+    await supabase.from("tenants").update(fields).eq("id", id);
+  } else {
+    await supabase.from("tenants").insert({ ...fields, dsa: "Not started", billing: "Prospect", live: true });
+  }
   revalidatePath("/schools");
+  revalidatePath("/revenue");
   revalidatePath("/", "layout");
+  redirect("/schools"); // clears the ?edit= param after saving
 }
 
 export async function deleteTenant(formData: FormData) {

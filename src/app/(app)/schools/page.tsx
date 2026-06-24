@@ -1,17 +1,20 @@
 import { getProfile, getTenants, getConfig } from "@/lib/queries";
 import { isFQ, splitFor } from "@/lib/types";
-import { createTenant, deleteTenant } from "./actions";
+import { saveTenant, deleteTenant } from "./actions";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function SchoolsPage() {
+export default async function SchoolsPage({ searchParams }: { searchParams: { edit?: string } }) {
   const profile = await getProfile();
   if (!profile) redirect("/login");
   if (!isFQ(profile.role)) return <div className="empty">Tenant management is FocusQuest-only.</div>;
 
   const tenants = await getTenants();
   const types = (await getConfig()).filter((c) => c.kind === "type");
+  const editing = searchParams.edit ? tenants.find((t) => t.id === searchParams.edit) : undefined;
+  const editSplit = editing ? splitFor(editing) : undefined;
 
   return (
     <>
@@ -21,21 +24,27 @@ export default async function SchoolsPage() {
       </div>
 
       <div className="card">
-        <h3>Add a school</h3>
-        <form action={createTenant} className="form">
+        <h3>{editing ? "Edit school" : "Add a school"}</h3>
+        <form action={saveTenant} className="form">
+          {editing && <input type="hidden" name="id" value={editing.id} />}
           <div className="frow f3">
-            <div className="field"><label>Institution name</label><input name="name" placeholder="e.g. Texas Southern University" required /></div>
-            <div className="field"><label>Short code</label><input name="short_code" placeholder="e.g. TSU" maxLength={6} required /></div>
+            <div className="field"><label>Institution name</label><input name="name" placeholder="e.g. Texas Southern University" defaultValue={editing?.name ?? ""} required /></div>
+            <div className="field"><label>Short code</label><input name="short_code" placeholder="e.g. TSU" maxLength={6} defaultValue={editing?.short_code ?? ""} required /></div>
             <div className="field"><label>Type</label>
-              <select name="type">{types.map((t) => <option key={t.id}>{t.value}</option>)}</select>
+              <select name="type" defaultValue={editing?.type ?? types[0]?.value}>{types.map((t) => <option key={t.id}>{t.value}</option>)}</select>
             </div>
           </div>
           <div className="frow f3">
-            <div className="field"><label>School %</label><input name="school_share" type="number" defaultValue={40} min={0} max={100} /></div>
-            <div className="field"><label>FocusQuest %</label><input name="fq_share" type="number" defaultValue={20} min={0} max={100} /></div>
-            <div className="field"><label>Primary contact</label><input name="contact" placeholder="Office of Online Programs" /></div>
+            <div className="field"><label>School %</label><input name="school_share" type="number" defaultValue={editSplit ? Math.round(editSplit.school * 100) : 40} min={0} max={100} /></div>
+            <div className="field"><label>FocusQuest %</label><input name="fq_share" type="number" defaultValue={editSplit ? Math.round(editSplit.fq * 100) : 20} min={0} max={100} /></div>
+            <div className="field"><label>Primary contact</label><input name="contact" placeholder="Office of Online Programs" defaultValue={editing?.contact ?? ""} /></div>
           </div>
-          <div><button className="btn gold">+ Create tenant</button></div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button className="btn gold">{editing ? "Save changes" : "+ Create tenant"}</button>
+            {editing
+              ? <Link className="btn ghost" href="/schools">Cancel</Link>
+              : <button type="reset" className="btn ghost">Clear</button>}
+          </div>
         </form>
       </div>
 
@@ -55,10 +64,13 @@ export default async function SchoolsPage() {
                   <td>{t.dsa === "Signed" ? <span className="chip green">Signed</span> : <span className="chip amber">{t.dsa}</span>}</td>
                   <td>{t.live ? <span className="chip green">Active</span> : <span className="chip gray">Prospect</span>}</td>
                   <td>
-                    <form action={deleteTenant}>
-                      <input type="hidden" name="id" value={t.id} />
-                      <button className="btn sm danger">Remove</button>
-                    </form>
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <Link className="btn sm ghost" href={`/schools?edit=${t.id}`}>Edit</Link>
+                      <form action={deleteTenant}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <button className="btn sm danger">Remove</button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               );
