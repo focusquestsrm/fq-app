@@ -17,10 +17,10 @@ export default async function DashboardPage() {
       <>
         <div className="pagehead">
           <div className="eyebrow">Welcome</div>
-          <h2>Let&apos;s set up your platform</h2>
+          <h2>Let&apos;s Set Up Your Platform</h2>
         </div>
         <div className="card">
-          <h3>Get started</h3>
+          <h3>Get Started</h3>
           <p className="muted" style={{ fontSize: 13 }}>
             {isFQ(profile.role)
               ? "Head to Tenant Management to create your first school."
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-        <div style={{ padding: "16px 18px 0" }}><h3>Program performance — enrolled vs goal</h3></div>
+        <div style={{ padding: "16px 18px 0" }}><h3>Program Performance — Enrolled vs Goal</h3></div>
         <table>
           <thead><tr><th>Program</th><th className="r">Enrolled</th><th className="r">Cohort goal</th><th>Progress</th></tr></thead>
           <tbody>

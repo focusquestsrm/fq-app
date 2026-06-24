@@ -44,15 +44,15 @@ export default async function SettingsPage() {
     <>
       <div className="pagehead">
         <div className="eyebrow">Configuration</div>
-        <h2>Manage your lists</h2>
+        <h2>Manage Your Lists</h2>
       </div>
       <div className="cards c2">
-        <ListEditor title="Institution types" kind="type" items={by("type")} placeholder="HBCU" />
-        <ListEditor title="Providers / publishers" kind="provider" items={by("provider")} placeholder="MedCerts" />
-        <ListEditor title="Payment sources" kind="payment" items={by("payment")} placeholder="Workforce" />
-        <ListEditor title="Lead dispositions" kind="disposition" items={by("disposition")} placeholder="Contacted" />
-        <ListEditor title="Program categories" kind="category" items={by("category")} placeholder="Allied Health" />
-        <ListEditor title="Funding sources" kind="funding" items={by("funding")} placeholder="Workforce" />
+        <ListEditor title="Institution Types" kind="type" items={by("type")} placeholder="HBCU" />
+        <ListEditor title="Providers / Publishers" kind="provider" items={by("provider")} placeholder="MedCerts" />
+        <ListEditor title="Payment Sources" kind="payment" items={by("payment")} placeholder="Workforce" />
+        <ListEditor title="Lead Dispositions" kind="disposition" items={by("disposition")} placeholder="Contacted" />
+        <ListEditor title="Program Categories" kind="category" items={by("category")} placeholder="Allied Health" />
+        <ListEditor title="Funding Sources" kind="funding" items={by("funding")} placeholder="Workforce" />
       </div>
     </>
   );

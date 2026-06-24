@@ -20,11 +20,11 @@ export default async function SchoolsPage({ searchParams }: { searchParams: { ed
     <>
       <div className="pagehead">
         <div className="eyebrow">Administration</div>
-        <h2>Schools &amp; tenants</h2>
+        <h2>Schools &amp; Tenants</h2>
       </div>
 
       <div className="card">
-        <h3>{editing ? "Edit school" : "Add a school"}</h3>
+        <h3>{editing ? "Edit School" : "Add a School"}</h3>
         <form action={saveTenant} className="form">
           {editing && <input type="hidden" name="id" value={editing.id} />}
           <div className="frow f3">

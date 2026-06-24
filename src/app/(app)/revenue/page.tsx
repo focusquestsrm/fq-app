@@ -26,12 +26,12 @@ export default async function RevenuePage() {
     <>
       <div className="pagehead">
         <div className="eyebrow">Finance</div>
-        <h2>Revenue model — {tenant.name}</h2>
+        <h2>Revenue Model — {tenant.name}</h2>
       </div>
 
       {fq ? (
         <div className="card">
-          <h3>Revenue split</h3>
+          <h3>Revenue Split</h3>
           <SplitForm tenantId={tenant.id} school={Math.round(sp.school * 100)} fq={Math.round(sp.fq * 100)} provider={Math.round(sp.provider * 100)} action={updateSplit} />
           <div className="split">
             <div className="s1" style={{ width: pct(sp.school) }}>School {pct(sp.school)}</div>
@@ -41,11 +41,11 @@ export default async function RevenuePage() {
           <div className="srcnote">School portals only ever see the school %. Provider = remainder after school + FQ.</div>
         </div>
       ) : (
-        <div className="card"><h3>Your revenue share</h3><div style={{ fontSize: 22, fontFamily: "var(--font-display)" }}>{pct(sp.school)}</div></div>
+        <div className="card"><h3>Your Revenue Share</h3><div style={{ fontSize: 22, fontFamily: "var(--font-display)" }}>{pct(sp.school)}</div></div>
       )}
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-        <div style={{ padding: "16px 18px 0" }}><h3>Totals calculator — students × cost × split</h3></div>
+        <div style={{ padding: "16px 18px 0" }}><h3>Totals Calculator — Students × Cost × Split</h3></div>
         <table>
           <thead>
             <tr>

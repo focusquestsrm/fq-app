@@ -30,7 +30,7 @@ export default async function StudentsPage() {
       </div>
 
       <div className="card">
-        <h3>Add a student</h3>
+        <h3>Add a Student</h3>
         {programs.length === 0 ? (
           <div className="callout">Add at least one program in the Program Catalog before enrolling students.</div>
         ) : (

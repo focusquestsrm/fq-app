@@ -46,12 +46,12 @@ export default async function UsersPage() {
     <>
       <div className="pagehead">
         <div className="eyebrow">Administration</div>
-        <h2>Users &amp; permissions</h2>
+        <h2>Users &amp; Permissions</h2>
       </div>
 
       {manage && (
         <div className="card">
-          <h3>Invite a user</h3>
+          <h3>Invite a User</h3>
           <p className="muted" style={{ fontSize: 12.5, marginTop: -4, marginBottom: 12 }}>
             They’ll get an email invite to set a password. Their role and school are applied on signup.
           </p>
