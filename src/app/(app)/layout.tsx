@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getProfile, getTenants, getScope } from "@/lib/queries";
 import { Sidebar } from "@/components/Sidebar";
 import { Topbar } from "@/components/Topbar";
-import { isFQ } from "@/lib/types";
+import { isFQ, canManageUsers } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="shell">
-      <Sidebar fq={isFQ(profile.role)} />
+      <Sidebar fq={isFQ(profile.role)} canUsers={isFQ(profile.role) || canManageUsers(profile.role)} />
       <div className="main">
         <Topbar profile={profile} tenants={tenants} scope={scope} />
         <div className="content">{children}</div>

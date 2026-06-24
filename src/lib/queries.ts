@@ -41,6 +41,18 @@ export async function getStudents(tenantId?: string): Promise<Student[]> {
   return (data as Student[]) ?? [];
 }
 
+// People the current user is allowed to see. RLS scopes the result: FQ users get
+// everyone; school users get only their own tenant's profiles (+ themselves).
+export async function getProfiles(): Promise<Profile[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("profiles")
+    .select("*")
+    .order("role")
+    .order("full_name");
+  return (data as Profile[]) ?? [];
+}
+
 export async function getConfig(): Promise<ConfigItem[]> {
   const supabase = createClient();
   const { data } = await supabase.from("config_items").select("*").order("sort");

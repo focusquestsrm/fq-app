@@ -13,22 +13,24 @@ export const STA = {
 export const enrolledRev = (stage: number) => stage >= STA.enrolled && stage !== STA.dropped;
 
 export const ROLE_LABELS: Record<Role, string> = {
-  superadmin: "FQ Super Admin",
-  accountmgr: "FQ Account Manager",
-  schoolexec: "School Executive",
-  enrollmgr: "School Enrollment Mgr",
+  superadmin: "FQ Owner",
+  accountmgr: "FQ Admin",
+  fqviewer: "FQ Viewer",
+  schoolexec: "School Admin",
+  enrollmgr: "School Editor",
   coach: "Student Success Coach",
   provider: "Provider / Publisher",
   finance: "Finance / Billing",
-  auditor: "Read-only Auditor",
+  auditor: "School Viewer",
 };
 
-export const NAV = [
+export const NAV: { href: string; label: string; fqOnly?: boolean; usersNav?: boolean }[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/revenue", label: "Revenue Model" },
   { href: "/programs", label: "Program Catalog" },
   { href: "/students", label: "Students" },
   { href: "/schools", label: "Tenant Management", fqOnly: true },
+  { href: "/users", label: "Users & Permissions", usersNav: true },
   { href: "/settings", label: "Configuration", fqOnly: true },
 ];
 

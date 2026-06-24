@@ -1,5 +1,5 @@
 export type Role =
-  | "superadmin" | "accountmgr" | "schoolexec" | "enrollmgr"
+  | "superadmin" | "accountmgr" | "fqviewer" | "schoolexec" | "enrollmgr"
   | "coach" | "provider" | "finance" | "auditor";
 
 export type Tenant = {
@@ -89,7 +89,33 @@ export function splitFor(t: Pick<Tenant, "school_share" | "fq_share">): Split {
   return { school, fq, provider: Math.max(0, 1 - school - fq) };
 }
 
+// FocusQuest-level roles see every school. Add fqviewer (read-only, org-wide).
 export const isFQ = (r: Role) =>
-  r === "superadmin" || r === "accountmgr" || r === "finance";
+  r === "superadmin" || r === "accountmgr" || r === "finance" || r === "fqviewer";
 export const canEdit = (r: Role) =>
   r === "superadmin" || r === "accountmgr" || r === "schoolexec" || r === "enrollmgr";
+
+// ---- Users & Permissions: role hierarchy helpers ---------------------------
+// Owner / Product Owner — full control, can manage other FQ admins.
+export const isOwner = (r: Role) => r === "superadmin";
+// FQ admins (owner + FQ Admin) manage across all schools.
+export const isFQAdmin = (r: Role) => r === "superadmin" || r === "accountmgr";
+// Who may manage users at all: FQ admins + School Admins (their own school).
+export const canManageUsers = (r: Role) =>
+  r === "superadmin" || r === "accountmgr" || r === "schoolexec";
+
+export const FQ_ROLES: Role[] = ["superadmin", "accountmgr", "fqviewer"];
+export const SCHOOL_ROLES: Role[] = ["schoolexec", "enrollmgr", "auditor"];
+export const isFQRole = (r: Role) => FQ_ROLES.includes(r);
+export const isSchoolRole = (r: Role) => SCHOOL_ROLES.includes(r);
+
+// Roles an actor is permitted to grant to others.
+//  - Owner: anything (incl. other FQ admins / owners).
+//  - FQ Admin: FQ Viewer + any school role, but NOT FQ Admin/Owner (owner-only).
+//  - School Admin: school roles only (and, enforced elsewhere, only their school).
+export function assignableRoles(actor: Role): Role[] {
+  if (actor === "superadmin") return ["superadmin", "accountmgr", "fqviewer", ...SCHOOL_ROLES];
+  if (actor === "accountmgr") return ["fqviewer", ...SCHOOL_ROLES];
+  if (actor === "schoolexec") return [...SCHOOL_ROLES];
+  return [];
+}

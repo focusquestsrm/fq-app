@@ -3,9 +3,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV } from "@/lib/constants";
 
-export function Sidebar({ fq }: { fq: boolean }) {
+export function Sidebar({ fq, canUsers }: { fq: boolean; canUsers: boolean }) {
   const path = usePathname();
-  const items = NAV.filter((n) => !n.fqOnly || fq);
+  const items = NAV.filter((n) => (n.fqOnly ? fq : n.usersNav ? canUsers : true));
   return (
     <aside className="sidebar">
       <div className="brand">

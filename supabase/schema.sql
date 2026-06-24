@@ -8,7 +8,7 @@
 -- ---- roles -----------------------------------------------------------------
 do $$ begin
   create type user_role as enum
-    ('superadmin','accountmgr','schoolexec','enrollmgr','coach','provider','finance','auditor');
+    ('superadmin','accountmgr','fqviewer','schoolexec','enrollmgr','coach','provider','finance','auditor');
 exception when duplicate_object then null; end $$;
 
 -- ---- tenants (schools / partner institutions) ------------------------------
@@ -115,12 +115,24 @@ $$;
 
 create or replace function app_is_fq() returns boolean
   language sql stable security definer set search_path = public as $$
-  select coalesce(app_role() in ('superadmin','accountmgr','finance'), false)
+  select coalesce(app_role() in ('superadmin','accountmgr','finance','fqviewer'), false)
 $$;
 
 create or replace function app_can_edit() returns boolean
   language sql stable security definer set search_path = public as $$
   select coalesce(app_role() in ('superadmin','accountmgr','schoolexec','enrollmgr'), false)
+$$;
+
+-- FQ admins (owner + FQ Admin) can edit users across all schools.
+create or replace function app_is_fq_admin() returns boolean
+  language sql stable security definer set search_path = public as $$
+  select coalesce(app_role() in ('superadmin','accountmgr'), false)
+$$;
+
+-- Who may manage user rows: FQ admins + School Admins (their own school only).
+create or replace function app_can_manage_users() returns boolean
+  language sql stable security definer set search_path = public as $$
+  select coalesce(app_role() in ('superadmin','accountmgr','schoolexec'), false)
 $$;
 
 -- ============================================================================
@@ -168,9 +180,23 @@ create policy tenants_write on tenants for all to authenticated
 drop policy if exists profiles_read on profiles;
 create policy profiles_read on profiles for select to authenticated
   using ( id = auth.uid() or app_is_fq() or tenant_id = app_tenant() );
+-- Update: yourself, OR an FQ admin (anyone), OR a School Admin editing one of
+-- their own school's school-level users. The new row must stay school-scoped so
+-- a School Admin can't move someone to FQ access or another school.
 drop policy if exists profiles_self_update on profiles;
-create policy profiles_self_update on profiles for update to authenticated
-  using ( id = auth.uid() or app_is_fq() ) with check ( id = auth.uid() or app_is_fq() );
+drop policy if exists profiles_manage_update on profiles;
+create policy profiles_manage_update on profiles for update to authenticated
+  using (
+    id = auth.uid()
+    or app_is_fq_admin()
+    or ( app_role() = 'schoolexec' and tenant_id = app_tenant() )
+  )
+  with check (
+    id = auth.uid()
+    or app_is_fq_admin()
+    or ( app_role() = 'schoolexec' and tenant_id = app_tenant()
+         and role in ('schoolexec','enrollmgr','auditor') )
+  );
 drop policy if exists profiles_admin_write on profiles;
 create policy profiles_admin_write on profiles for insert to authenticated
   with check ( app_is_fq() );
