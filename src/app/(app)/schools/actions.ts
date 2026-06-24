@@ -14,12 +14,18 @@ export async function setScope(formData: FormData) {
 export async function saveTenant(formData: FormData) {
   const supabase = createClient();
   const id = String(formData.get("id") || "");
+  // Enter School % and Publisher %; FocusQuest % is the remainder.
+  const school = Math.max(0, Math.min(1, Number(formData.get("school_share") || 40) / 100));
+  let provider = Math.max(0, Math.min(1, Number(formData.get("provider_share") || 40) / 100));
+  if (school + provider > 1) provider = Math.max(0, 1 - school);
+  const fq = Math.max(0, 1 - school - provider);
   const fields = {
     name: String(formData.get("name") || "").trim(),
     short_code: String(formData.get("short_code") || "").trim().toUpperCase(),
     type: String(formData.get("type") || "HBCU"),
-    school_share: Number(formData.get("school_share") || 40) / 100,
-    fq_share: Number(formData.get("fq_share") || 20) / 100,
+    school_share: school,
+    provider_share: provider,
+    fq_share: fq,
     contact: String(formData.get("contact") || ""),
   };
   if (id) {

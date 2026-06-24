@@ -7,8 +7,9 @@ export type Tenant = {
   name: string;
   short_code: string;
   type: string;
-  school_share: number; // 0..1
-  fq_share: number;     // 0..1
+  school_share: number;          // 0..1
+  provider_share: number | null; // 0..1 (publisher); null on legacy rows → derived
+  fq_share: number;              // 0..1 (remainder of school + provider)
   contact: string;
   dsa: string;
   billing: string;
@@ -83,10 +84,13 @@ export type ConfigItem = {
 
 export type Split = { school: number; provider: number; fq: number };
 
-export function splitFor(t: Pick<Tenant, "school_share" | "fq_share">): Split {
+export function splitFor(t: Pick<Tenant, "school_share" | "fq_share" | "provider_share">): Split {
   const school = t.school_share ?? 0.4;
-  const fq = t.fq_share ?? 0;
-  return { school, fq, provider: Math.max(0, 1 - school - fq) };
+  // Prefer an explicitly entered publisher share; fall back to the legacy
+  // remainder (1 − school − fq) for rows saved before provider_share existed.
+  const provider = t.provider_share ?? Math.max(0, 1 - school - (t.fq_share ?? 0));
+  const fq = Math.max(0, 1 - school - provider);
+  return { school, provider, fq };
 }
 
 // FocusQuest-level roles see every school. Add fqviewer (read-only, org-wide).

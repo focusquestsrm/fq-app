@@ -66,8 +66,10 @@ When you add a module, copy the structure of an existing page (e.g.
    dispositions are rows in `config_items`, managed on the Settings page. Never
    hardcode these lists in components.
 3. **Revenue numbers derive from the entered split**, never hardcoded. School %
-   and FocusQuest % are stored on the tenant; provider % = `1 - school - fq`.
-   School portals only ever see the school %.
+   and Publisher % (`provider_share`) are entered and stored on the tenant;
+   FocusQuest % = `1 - school - provider` (the remainder). Legacy rows with a null
+   `provider_share` fall back to `provider = 1 - school - fq`. School portals only
+   ever see the school %.
 4. **AI scoring is advisory only** — human oversight + equity review. Never
    auto-enroll, auto-deny, or auto-drop a student.
 5. **Tenant isolation is enforced in the database** via RLS, not just the UI.
@@ -91,7 +93,7 @@ Helpers: `isFQ()`, `canEdit()` in `src/lib/types.ts`; SQL mirrors them
 
 ## Data model (Postgres — see `supabase/schema.sql`)
 `tenants, profiles, programs, students, leads, config_items`. Money split fields:
-`tenants.school_share`, `tenants.fq_share` (0..1). Run `schema.sql` then
+`tenants.school_share`, `tenants.provider_share`, `tenants.fq_share` (0..1). Run `schema.sql` then
 `seed.sql` on a fresh Supabase project.
 
 ## Build status

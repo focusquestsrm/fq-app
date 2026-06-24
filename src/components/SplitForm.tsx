@@ -21,13 +21,13 @@ export function SplitForm({
             onBlur={() => ref.current?.requestSubmit()} />
         </div>
         <div className="field">
-          <label>FocusQuest %</label>
-          <input name="fq_share" type="number" min={0} max={100} defaultValue={fq}
+          <label>Publisher %</label>
+          <input name="provider_share" type="number" min={0} max={100} defaultValue={provider}
             onBlur={() => ref.current?.requestSubmit()} />
         </div>
         <div className="field">
-          <label>Provider % (auto)</label>
-          <input value={provider} disabled style={{ background: "var(--paper)" }} />
+          <label>FocusQuest % (auto)</label>
+          <input value={fq} disabled style={{ background: "var(--paper)" }} />
         </div>
       </div>
     </form>
