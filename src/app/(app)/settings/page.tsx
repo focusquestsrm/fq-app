@@ -51,6 +51,8 @@ export default async function SettingsPage() {
         <ListEditor title="Providers / publishers" kind="provider" items={by("provider")} placeholder="MedCerts" />
         <ListEditor title="Payment sources" kind="payment" items={by("payment")} placeholder="Workforce" />
         <ListEditor title="Lead dispositions" kind="disposition" items={by("disposition")} placeholder="Contacted" />
+        <ListEditor title="Program categories" kind="category" items={by("category")} placeholder="Allied Health" />
+        <ListEditor title="Funding sources" kind="funding" items={by("funding")} placeholder="Workforce" />
       </div>
     </>
   );

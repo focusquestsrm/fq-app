@@ -19,4 +19,13 @@ insert into config_items (kind, value, sort) values
   ('disposition','Invalid phone',7), ('disposition','Not interested',8), ('disposition','Dropped',9)
 on conflict do nothing;
 
+insert into config_items (kind, value, sort) values
+  ('category','Allied Health',0), ('category','Technology',1),
+  ('category','Skilled Trades',2), ('category','Supportive Service',3)
+on conflict do nothing;
+
+insert into config_items (kind, value, sort) values
+  ('funding','Workforce',0), ('funding','ETPL',1), ('funding','Cash',2)
+on conflict do nothing;
+
 -- providers start empty — they register themselves as you add programs.

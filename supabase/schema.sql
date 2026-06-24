@@ -94,7 +94,7 @@ create table if not exists leads (
 -- ---- configurable lists (types / providers / payments / dispositions) ------
 create table if not exists config_items (
   id    uuid primary key default gen_random_uuid(),
-  kind  text not null check (kind in ('type','provider','payment','disposition')),
+  kind  text not null check (kind in ('type','provider','payment','disposition','category','funding')),
   value text not null,
   color text default '',
   sort  integer default 0

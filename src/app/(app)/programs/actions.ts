@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { PALETTE } from "@/lib/constants";
 
 async function ensureProvider(name: string) {
@@ -17,25 +18,30 @@ async function ensureProvider(name: string) {
   return name;
 }
 
-export async function createProgram(formData: FormData) {
+// Create a new program, or update an existing one when an `id` is present.
+export async function saveProgram(formData: FormData) {
   const supabase = createClient();
+  const id = String(formData.get("id") || "");
   const provider = await ensureProvider(String(formData.get("provider") || ""));
-  await supabase.from("programs").insert({
-    tenant_id: String(formData.get("tenant_id")),
+  const fields = {
     name: String(formData.get("name") || "").trim(),
     provider,
     cost: Number(formData.get("cost") || 0),
     goal: Number(formData.get("goal") || 0),
     cap: Number(formData.get("cap") || 0),
     cert: String(formData.get("cert") || ""),
-    hours: Number(formData.get("hours") || 0),
-    weeks: Number(formData.get("weeks") || 0),
-    category: String(formData.get("category") || "Allied Health"),
+    category: String(formData.get("category") || ""),
     delivery: String(formData.get("delivery") || "Online"),
-    funding: String(formData.get("funding") || "").split(",").map((s) => s.trim()).filter(Boolean),
-    active: true,
-  });
+    funding: formData.getAll("funding").map(String).filter(Boolean),
+  };
+  if (id) {
+    await supabase.from("programs").update(fields).eq("id", id);
+  } else {
+    await supabase.from("programs").insert({ tenant_id: String(formData.get("tenant_id")), ...fields, active: true });
+  }
   revalidatePath("/programs");
+  revalidatePath("/revenue");
+  redirect("/programs"); // clears the ?edit= param after saving
 }
 
 export async function updateProgramField(formData: FormData) {

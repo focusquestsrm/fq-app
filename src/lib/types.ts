@@ -75,7 +75,7 @@ export type Lead = {
 
 export type ConfigItem = {
   id: string;
-  kind: "type" | "provider" | "payment" | "disposition";
+  kind: "type" | "provider" | "payment" | "disposition" | "category" | "funding";
   value: string;
   color: string;
   sort: number;
