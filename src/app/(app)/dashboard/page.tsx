@@ -144,12 +144,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
               ))}
             </div>
           )}
+          <h3 style={{ margin: "0 0 10px" }}>Enrollment</h3>
           <div className="cards c4">
             <div className="card kpi"><div className="lbl">Active leads</div><div className="val">{activeLeads}</div></div>
             <div className="card kpi"><div className="lbl">Applications started</div><div className="val">{appsStarted}</div></div>
             <div className="card kpi"><div className="lbl">Enrolled students</div><div className="val">{enrolled.length}</div></div>
             <div className="card kpi"><div className="lbl">Enrollment rate</div><div className="val">{pct(enrollRate)}</div><div className="det">enrolled ÷ (leads + students)</div></div>
           </div>
+          <h3 style={{ margin: "18px 0 10px" }}>Revenue</h3>
           <div className="cards c4">
             <div className="card kpi"><div className="lbl">Gross revenue</div><div className="val" style={{ fontSize: 22 }}>{fmt(gross)}</div><div className="det">collected {fmt(collected)}</div></div>
             <div className="card kpi"><div className="lbl">School share</div><div className="val" style={{ fontSize: 22 }}>{fmt(schoolRev)}</div></div>
@@ -298,7 +300,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       )}
 
       {(tab === "journey" || tab === "success" || tab === "ai") && (
-        <div className="card"><div className="empty">No data available yet.</div></div>
+        <div className="card"><div className="empty">No Data Available</div></div>
       )}
     </>
   );
