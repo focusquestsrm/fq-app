@@ -1,4 +1,5 @@
-import { getProfile, getTenants, getScope, getPrograms, getStudents, getConfig } from "@/lib/queries";
+import { getProfile, getTenants, getScope, getPrograms, getStudents, getConfig, getClientView } from "@/lib/queries";
+import { isFQ } from "@/lib/types";
 import { STAGES, STA } from "@/lib/constants";
 import { fmt } from "@/lib/format";
 import { addStudent, deleteStudent } from "./actions";
@@ -19,6 +20,9 @@ export default async function StudentsPage() {
   if (!scope) return <div className="empty">Create a school first (Tenant Management).</div>;
 
   const all = scope === "all";
+  // Students are FocusQuest-managed; schools (and FQ in Client View) are read-only.
+  const clientView = isFQ(profile.role) && !all && getClientView();
+  const canManage = isFQ(profile.role) && !clientView;
   const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
   const programs = (await getPrograms(all ? undefined : scope)).filter((p) => p.active);
   const students = await getStudents(all ? undefined : scope);
@@ -31,6 +35,7 @@ export default async function StudentsPage() {
         <h2>Students</h2>
       </div>
 
+      {canManage && (
       <div className="card">
         <h3>Add a Student</h3>
         {all ? (
@@ -64,12 +69,13 @@ export default async function StudentsPage() {
           </form>
         )}
       </div>
+      )}
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table>
-          <thead><tr><th>Student</th><th>Program</th><th className="r">Cost</th><th className="r">Collected</th><th>Stage</th><th></th></tr></thead>
+          <thead><tr><th>Student</th><th>Program</th><th className="r">Cost</th><th className="r">Collected</th><th>Stage</th>{canManage && <th></th>}</tr></thead>
           <tbody>
-            {students.length === 0 && <tr><td colSpan={6}><div className="empty">No students yet.</div></td></tr>}
+            {students.length === 0 && <tr><td colSpan={canManage ? 6 : 5}><div className="empty">No students yet.</div></td></tr>}
             {students.map((s) => (
               <tr key={s.id}>
                 <td><b>{s.first_name} {s.last_name}</b>{all && <div className="muted" style={{ fontSize: 11 }}>{codeOf.get(s.tenant_id) ?? "—"}</div>}</td>
@@ -77,7 +83,7 @@ export default async function StudentsPage() {
                 <td className="r money">{fmt(s.cost)}</td>
                 <td className="r money" style={{ color: "var(--green)" }}>{fmt(s.collected)}</td>
                 <td>{stageChip(s.stage)}</td>
-                <td><form action={deleteStudent}><input type="hidden" name="id" value={s.id} /><button className="btn sm danger">✕</button></form></td>
+                {canManage && <td><form action={deleteStudent}><input type="hidden" name="id" value={s.id} /><button className="btn sm danger">✕</button></form></td>}
               </tr>
             ))}
           </tbody>

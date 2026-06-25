@@ -1,8 +1,17 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/queries";
+import { isFQ } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 
+// Students are managed by FocusQuest; schools view them read-only.
+async function requireFQ() {
+  const p = await getProfile();
+  if (!p || !isFQ(p.role)) throw new Error("Students are managed by FocusQuest.");
+}
+
 export async function addStudent(formData: FormData) {
+  await requireFQ();
   const supabase = createClient();
   const tenant_id = String(formData.get("tenant_id"));
   const program_id = String(formData.get("program_id") || "");
@@ -32,6 +41,7 @@ export async function addStudent(formData: FormData) {
 }
 
 export async function deleteStudent(formData: FormData) {
+  await requireFQ();
   const supabase = createClient();
   await supabase.from("students").delete().eq("id", String(formData.get("id")));
   revalidatePath("/students");
