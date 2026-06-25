@@ -1,5 +1,5 @@
 import { createClient } from "./supabase/server";
-import type { Profile, Tenant, Program, Student, ConfigItem } from "./types";
+import type { Profile, Tenant, Program, Student, Lead, ConfigItem } from "./types";
 import { cookies } from "next/headers";
 
 export async function getProfile(): Promise<Profile | null> {
@@ -41,6 +41,14 @@ export async function getStudents(tenantId?: string): Promise<Student[]> {
   if (tenantId) q = q.eq("tenant_id", tenantId);
   const { data } = await q;
   return (data as Student[]) ?? [];
+}
+
+export async function getLeads(tenantId?: string): Promise<Lead[]> {
+  const supabase = createClient();
+  let q = supabase.from("leads").select("*").order("created_at", { ascending: false });
+  if (tenantId) q = q.eq("tenant_id", tenantId);
+  const { data } = await q;
+  return (data as Lead[]) ?? [];
 }
 
 // People the current user is allowed to see. RLS scopes the result: FQ users get
