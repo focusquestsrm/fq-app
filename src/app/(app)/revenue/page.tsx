@@ -1,4 +1,4 @@
-import { getProfile, getTenants, getScope, getPrograms, getProviders } from "@/lib/queries";
+import { getProfile, getTenants, getScope, getPrograms, getProviders, getClientView } from "@/lib/queries";
 import { isFQ, splitFor, splitForProvider, type Split } from "@/lib/types";
 import { fmt, pct } from "@/lib/format";
 import { updateSplit } from "./actions";
@@ -19,6 +19,9 @@ export default async function RevenuePage() {
   if (!tenant) return <div className="empty">Create a school first (Tenant Management).</div>;
 
   const fq = isFQ(profile.role);
+  const clientView = fq && getClientView();
+  const canManage = fq && !clientView;   // schools (and FQ in Client View) are read-only
+  const viewAsSchool = !fq || clientView; // school portal: school share only
   const sp = splitFor(tenant); // tenant default split (fallback + school-portal share)
   const programs = (await getPrograms(scope || undefined)).filter((p) => p.active);
 
@@ -41,7 +44,7 @@ export default async function RevenuePage() {
         <h2>Revenue Model — {tenant.name}</h2>
       </div>
 
-      {fq ? (
+      {canManage ? (
         <div className="card">
           <h3>Revenue Split</h3>
           <SplitForm tenantId={tenant.id} school={Math.round(sp.school * 100)} fq={Math.round(sp.fq * 100)} provider={Math.round(sp.provider * 100)} action={updateSplit} />
@@ -50,7 +53,7 @@ export default async function RevenuePage() {
             <div className="s2" style={{ width: pct(sp.provider) }}>Provider {pct(sp.provider)}</div>
             <div className="s3" style={{ width: pct(sp.fq) }}>FQ {pct(sp.fq)}</div>
           </div>
-          <div className="srcnote">School portals only ever see the school %. Provider = remainder after school + FQ.</div>
+          <div className="srcnote">This is the school&apos;s default split (a fallback); each program uses its provider&apos;s split below. School portals only ever see the school %.</div>
         </div>
       ) : (
         <div className="card"><h3>Your Revenue Share</h3><div style={{ fontSize: 22, fontFamily: "var(--font-display)" }}>{pct(sp.school)}</div></div>
@@ -63,12 +66,12 @@ export default async function RevenuePage() {
             <tr>
               <th>Program</th><th>Provider</th><th className="r">Cohort size</th><th className="r">Cost / student</th>
               <th className="r">Gross</th><th className="r">School</th>
-              {fq && <th className="r">Provider</th>}
-              {fq && <th className="r">FQ</th>}
+              {!viewAsSchool && <th className="r">Provider</th>}
+              {!viewAsSchool && <th className="r">FQ</th>}
             </tr>
           </thead>
           <tbody>
-            {programs.length === 0 && <tr><td colSpan={fq ? 8 : 6}><div className="empty">No active programs yet. Add programs in the catalog.</div></td></tr>}
+            {programs.length === 0 && <tr><td colSpan={viewAsSchool ? 6 : 8}><div className="empty">No active programs yet.</div></td></tr>}
             {programs.map((p) => {
               const gr = p.goal * p.cost;
               const spx = splitOf(p.provider);
@@ -76,12 +79,12 @@ export default async function RevenuePage() {
                 <tr key={p.id}>
                   <td><b>{p.name}</b></td>
                   <td>{p.provider || "—"}</td>
-                  <td className="r"><InlineNumber id={p.id} field="goal" value={p.goal} action={updateProgramField} /></td>
-                  <td className="r"><InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /></td>
+                  <td className="r">{canManage ? <InlineNumber id={p.id} field="goal" value={p.goal} action={updateProgramField} /> : <span className="mono">{p.goal}</span>}</td>
+                  <td className="r">{canManage ? <InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /> : <span className="money">{fmt(p.cost)}</span>}</td>
                   <td className="r money">{fmt(gr)}</td>
                   <td className="r money" style={{ color: "var(--gold-deep)" }}>{fmt(gr * spx.school)}</td>
-                  {fq && <td className="r money">{fmt(gr * spx.provider)}</td>}
-                  {fq && <td className="r money">{fmt(gr * spx.fq)}</td>}
+                  {!viewAsSchool && <td className="r money">{fmt(gr * spx.provider)}</td>}
+                  {!viewAsSchool && <td className="r money">{fmt(gr * spx.fq)}</td>}
                 </tr>
               );
             })}
@@ -93,8 +96,8 @@ export default async function RevenuePage() {
                 <td></td>
                 <td className="r money"><b>{fmt(tGross)}</b></td>
                 <td className="r money" style={{ color: "var(--gold-deep)" }}><b>{fmt(tSchool)}</b></td>
-                {fq && <td className="r money"><b>{fmt(tProvider)}</b></td>}
-                {fq && <td className="r money"><b>{fmt(tFq)}</b></td>}
+                {!viewAsSchool && <td className="r money"><b>{fmt(tProvider)}</b></td>}
+                {!viewAsSchool && <td className="r money"><b>{fmt(tFq)}</b></td>}
               </tr>
             )}
           </tbody>

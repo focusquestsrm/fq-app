@@ -63,6 +63,12 @@ export async function getProfiles(): Promise<Profile[]> {
   return (data as Profile[]) ?? [];
 }
 
+// FQ "Client View" preview toggle (cookie). When on, an FQ user sees a scoped
+// school exactly as that school would: school-share only and read-only.
+export function getClientView(): boolean {
+  return cookies().get("clientview")?.value === "1";
+}
+
 export async function getProviders(): Promise<Provider[]> {
   const supabase = createClient();
   const { data } = await supabase.from("providers").select("*").order("sort").order("name");

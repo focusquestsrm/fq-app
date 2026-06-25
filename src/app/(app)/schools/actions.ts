@@ -10,6 +10,15 @@ export async function setScope(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
+// Toggle the FQ "Client View" preview (see a school as that school sees it).
+export async function setClientView(formData: FormData) {
+  const on = String(formData.get("on") || "") === "1";
+  const store = cookies();
+  if (on) store.set("clientview", "1", { path: "/" });
+  else store.set("clientview", "", { path: "/", maxAge: 0 });
+  revalidatePath("/", "layout");
+}
+
 // Create a new school, or update an existing one when an `id` is present.
 export async function saveTenant(formData: FormData) {
   const supabase = createClient();

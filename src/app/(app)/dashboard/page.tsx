@@ -1,4 +1,4 @@
-import { getProfile, getTenants, getScope, getPrograms, getStudents, getLeads, getProviders } from "@/lib/queries";
+import { getProfile, getTenants, getScope, getPrograms, getStudents, getLeads, getProviders, getClientView } from "@/lib/queries";
 import { isFQ, splitFor, splitForProvider, type Split } from "@/lib/types";
 import { STAGES, STA, enrolledRev } from "@/lib/constants";
 import { fmt, pct } from "@/lib/format";
@@ -46,8 +46,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   const scope = await getScope(profile, tenants);
   const fq = isFQ(profile.role);
-  const viewAsSchool = !fq; // school portal: school share only (extended by Client View)
   const all = scope === "all";
+  const clientView = fq && !all && getClientView();
+  const viewAsSchool = !fq || clientView; // school portal / client preview: school share only
   const tenant = all ? null : tenants.find((t) => t.id === scope);
   if (!all && !tenant) return <div className="empty">Select a school from the top bar.</div>;
   const tab = TABS.some(([k]) => k === searchParams.tab) ? searchParams.tab! : "overview";

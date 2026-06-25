@@ -1,8 +1,12 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/queries";
+import { isFQ } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 
 export async function updateSplit(formData: FormData) {
+  const profile = await getProfile();
+  if (!profile || !isFQ(profile.role)) throw new Error("Revenue settings are managed by FocusQuest.");
   const supabase = createClient();
   const id = String(formData.get("tenant_id"));
   // Enter School % and Provider %; FocusQuest % is the remainder.

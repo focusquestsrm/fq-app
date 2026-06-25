@@ -1,7 +1,15 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/queries";
+import { isFQ } from "@/lib/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+// Programs/catalog are managed by FocusQuest; schools view them read-only.
+async function requireFQ() {
+  const p = await getProfile();
+  if (!p || !isFQ(p.role)) throw new Error("Programs are managed by FocusQuest.");
+}
 
 // Register a provider by name if it doesn't exist yet (default split applies;
 // edit the split on the Settings page).
@@ -19,6 +27,7 @@ async function ensureProvider(name: string) {
 
 // Create a new program, or update an existing one when an `id` is present.
 export async function saveProgram(formData: FormData) {
+  await requireFQ();
   const supabase = createClient();
   const id = String(formData.get("id") || "");
   const provider = await ensureProvider(String(formData.get("provider") || ""));
@@ -44,6 +53,7 @@ export async function saveProgram(formData: FormData) {
 }
 
 export async function updateProgramField(formData: FormData) {
+  await requireFQ();
   const supabase = createClient();
   const id = String(formData.get("id"));
   const field = String(formData.get("field")); // 'cost' | 'goal'
@@ -55,6 +65,7 @@ export async function updateProgramField(formData: FormData) {
 }
 
 export async function deleteProgram(formData: FormData) {
+  await requireFQ();
   const supabase = createClient();
   await supabase.from("programs").delete().eq("id", String(formData.get("id")));
   revalidatePath("/programs");

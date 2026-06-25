@@ -1,4 +1,6 @@
-import { getProfile, getTenants, getScope, getPrograms, getConfig, getProviders } from "@/lib/queries";
+import { getProfile, getTenants, getScope, getPrograms, getConfig, getProviders, getClientView } from "@/lib/queries";
+import { isFQ } from "@/lib/types";
+import { fmt } from "@/lib/format";
 import { saveProgram, deleteProgram, updateProgramField } from "./actions";
 import { InlineNumber } from "@/components/InlineNumber";
 import { redirect } from "next/navigation";
@@ -14,7 +16,10 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
   if (!scope) return <div className="empty">Create a school first (Tenant Management).</div>;
 
   const all = scope === "all";
-  const canAdd = !all; // need a single school to attach a new program to
+  // Catalog is FocusQuest-managed; schools (and FQ in Client View) are read-only.
+  const clientView = isFQ(profile.role) && !all && getClientView();
+  const canManage = isFQ(profile.role) && !clientView;
+  const canAdd = canManage && !all; // need a single school to attach a new program to
   const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
   const programs = await getPrograms(all ? undefined : scope);
   const config = await getConfig();
@@ -37,7 +42,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
         <h2>Program Catalog</h2>
       </div>
 
-      {!canAdd && !editing ? (
+      {canManage && (!canAdd && !editing ? (
         <div className="card"><div className="callout">Showing programs for <b>all schools</b>. Select a single school from the top bar to add or edit a program.</div></div>
       ) : (
       <div className="card">
@@ -84,27 +89,29 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
           </div>
         </form>
       </div>
-      )}
+      ))}
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table>
-          <thead><tr><th>Program</th><th>Provider</th><th className="r">Tuition</th><th>Delivery</th><th className="r">Cohort goal</th><th>Cert</th><th></th></tr></thead>
+          <thead><tr><th>Program</th><th>Provider</th><th className="r">Tuition</th><th>Delivery</th><th className="r">Cohort goal</th><th>Cert</th>{canManage && <th></th>}</tr></thead>
           <tbody>
-            {programs.length === 0 && <tr><td colSpan={7}><div className="empty">No programs yet — add your first above.</div></td></tr>}
+            {programs.length === 0 && <tr><td colSpan={canManage ? 7 : 6}><div className="empty">No programs yet{canManage ? " — add your first above." : "."}</div></td></tr>}
             {programs.map((p) => (
               <tr key={p.id}>
                 <td><b>{p.name}</b><div className="muted" style={{ fontSize: 11 }}>{all ? (codeOf.get(p.tenant_id) ?? "—") + " · " : ""}{p.category || "—"}{p.funding?.length ? " · " + p.funding.join(", ") : ""}</div></td>
                 <td>{p.provider || "—"}</td>
-                <td className="r"><InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /></td>
+                <td className="r">{canManage ? <InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /> : <span className="money">{fmt(p.cost)}</span>}</td>
                 <td><span className={"chip " + (p.delivery === "Hybrid" ? "amber" : p.delivery === "In-person" ? "gray" : "blue")}>{p.delivery}</span></td>
-                <td className="r"><InlineNumber id={p.id} field="goal" value={p.goal} action={updateProgramField} /></td>
+                <td className="r">{canManage ? <InlineNumber id={p.id} field="goal" value={p.goal} action={updateProgramField} /> : <span className="mono">{p.goal}</span>}</td>
                 <td style={{ fontSize: 11.5 }}>{p.cert}</td>
-                <td>
-                  <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                    <Link className="btn sm ghost" href={`/programs?edit=${p.id}`}>Edit</Link>
-                    <form action={deleteProgram}><input type="hidden" name="id" value={p.id} /><button className="btn sm danger">✕</button></form>
-                  </div>
-                </td>
+                {canManage && (
+                  <td>
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <Link className="btn sm ghost" href={`/programs?edit=${p.id}`}>Edit</Link>
+                      <form action={deleteProgram}><input type="hidden" name="id" value={p.id} /><button className="btn sm danger">✕</button></form>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
