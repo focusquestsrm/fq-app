@@ -1,10 +1,8 @@
 import { getProfile, getTenants, getScope, getPrograms, getProviders, getClientView } from "@/lib/queries";
-import { isFQ, splitFor, splitForProvider, type Split } from "@/lib/types";
-import { fmt, pct } from "@/lib/format";
-import { updateSplit } from "./actions";
+import { isFQ, splitForProvider, ZERO_SPLIT, type Split } from "@/lib/types";
+import { fmt } from "@/lib/format";
 import { updateProgramField } from "../programs/actions";
 import { InlineNumber } from "@/components/InlineNumber";
-import { SplitForm } from "@/components/SplitForm";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -22,12 +20,11 @@ export default async function RevenuePage() {
   const clientView = fq && getClientView();
   const canManage = fq && !clientView;   // schools (and FQ in Client View) are read-only
   const viewAsSchool = !fq || clientView; // school portal: school share only
-  const sp = splitFor(tenant); // tenant default split (fallback + school-portal share)
   const programs = (await getPrograms(scope || undefined)).filter((p) => p.active);
 
-  // Each program uses its provider's split; fall back to the tenant split.
+  // Providers are the single source of truth for splits (managed on Settings).
   const providerSplit = new Map((await getProviders()).map((p) => [p.name, splitForProvider(p)] as const));
-  const splitOf = (providerName: string): Split => providerSplit.get(providerName) ?? sp;
+  const splitOf = (providerName: string): Split => providerSplit.get(providerName) ?? ZERO_SPLIT;
 
   let tCohort = 0, tGross = 0, tSchool = 0, tProvider = 0, tFq = 0;
   for (const p of programs) {
@@ -44,23 +41,11 @@ export default async function RevenuePage() {
         <h2>Revenue Model — {tenant.name}</h2>
       </div>
 
-      {canManage ? (
-        <div className="card">
-          <h3>Revenue Split</h3>
-          <SplitForm tenantId={tenant.id} school={Math.round(sp.school * 100)} fq={Math.round(sp.fq * 100)} provider={Math.round(sp.provider * 100)} action={updateSplit} />
-          <div className="split">
-            <div className="s1" style={{ width: pct(sp.school) }}>School {pct(sp.school)}</div>
-            <div className="s2" style={{ width: pct(sp.provider) }}>Provider {pct(sp.provider)}</div>
-            <div className="s3" style={{ width: pct(sp.fq) }}>FQ {pct(sp.fq)}</div>
-          </div>
-          <div className="srcnote">This is the school&apos;s default split (a fallback); each program uses its provider&apos;s split below. School portals only ever see the school %.</div>
-        </div>
-      ) : (
-        <div className="card"><h3>Your Revenue Share</h3><div style={{ fontSize: 22, fontFamily: "var(--font-display)" }}>{pct(sp.school)}</div></div>
-      )}
-
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-        <div style={{ padding: "16px 18px 0" }}><h3>Totals Calculator — Students × Cost × Split</h3></div>
+        <div style={{ padding: "16px 18px 0" }}>
+          <h3>Totals Calculator — Students × Cost × Split</h3>
+          {canManage && <div className="srcnote">Each program&apos;s split comes from its provider — manage providers &amp; splits on the Settings page.</div>}
+        </div>
         <table>
           <thead>
             <tr>

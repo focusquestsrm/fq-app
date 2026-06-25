@@ -7,9 +7,6 @@ export type Tenant = {
   name: string;
   short_code: string;
   type: string;
-  school_share: number;          // 0..1
-  provider_share: number | null; // 0..1 (provider); null on legacy rows → derived
-  fq_share: number;              // 0..1 (remainder of school + provider)
   contact: string;
   dsa: string;
   billing: string;
@@ -94,18 +91,12 @@ export type Provider = {
 
 export type Split = { school: number; provider: number; fq: number };
 
-// A provider's split, applied to programs/students that use that provider.
+// Providers are the single source of truth for revenue splits. A program/student
+// uses its provider's split; programs without a known provider attribute nothing.
+export const ZERO_SPLIT: Split = { school: 0, provider: 0, fq: 0 };
+
 export function splitForProvider(p: Pick<Provider, "school_share" | "provider_share" | "fq_share">): Split {
   return { school: p.school_share ?? 0, provider: p.provider_share ?? 0, fq: p.fq_share ?? 0 };
-}
-
-export function splitFor(t: Pick<Tenant, "school_share" | "fq_share" | "provider_share">): Split {
-  const school = t.school_share ?? 0.4;
-  // Prefer an explicitly entered provider share; fall back to the legacy
-  // remainder (1 − school − fq) for rows saved before provider_share existed.
-  const provider = t.provider_share ?? Math.max(0, 1 - school - (t.fq_share ?? 0));
-  const fq = Math.max(0, 1 - school - provider);
-  return { school, provider, fq };
 }
 
 // FocusQuest-level roles see every school. Add fqviewer (read-only, org-wide).

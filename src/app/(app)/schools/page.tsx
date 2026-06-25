@@ -1,5 +1,5 @@
 import { getProfile, getTenants, getConfig } from "@/lib/queries";
-import { isFQ, splitFor } from "@/lib/types";
+import { isFQ } from "@/lib/types";
 import { saveTenant, deleteTenant } from "./actions";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -14,7 +14,6 @@ export default async function SchoolsPage({ searchParams }: { searchParams: { ed
   const tenants = await getTenants();
   const types = (await getConfig()).filter((c) => c.kind === "type");
   const editing = searchParams.edit ? tenants.find((t) => t.id === searchParams.edit) : undefined;
-  const editSplit = editing ? splitFor(editing) : undefined;
 
   return (
     <>
@@ -35,11 +34,9 @@ export default async function SchoolsPage({ searchParams }: { searchParams: { ed
             </div>
           </div>
           <div className="frow f3">
-            <div className="field"><label>School %</label><input name="school_share" type="number" defaultValue={editSplit ? Math.round(editSplit.school * 100) : 40} min={0} max={100} /></div>
-            <div className="field"><label>Provider %</label><input name="provider_share" type="number" defaultValue={editSplit ? Math.round(editSplit.provider * 100) : 40} min={0} max={100} /></div>
             <div className="field"><label>Primary contact</label><input name="contact" placeholder="Office of Online Programs" defaultValue={editing?.contact ?? ""} /></div>
           </div>
-          <div className="muted" style={{ fontSize: 11, marginTop: -6 }}>FocusQuest % is the remainder: 100 − School − Provider.</div>
+          <div className="muted" style={{ fontSize: 11, marginTop: -6 }}>Revenue splits are set per provider on the Settings page.</div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn gold">{editing ? "Save changes" : "+ Create tenant"}</button>
             {editing
@@ -51,19 +48,15 @@ export default async function SchoolsPage({ searchParams }: { searchParams: { ed
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table>
-          <thead><tr><th>Institution</th><th>Code</th><th>Type</th><th className="r">School %</th><th className="r">Provider %</th><th className="r">FocusQuest %</th><th>DSA</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Institution</th><th>Code</th><th>Type</th><th>DSA</th><th>Status</th><th></th></tr></thead>
           <tbody>
-            {tenants.length === 0 && <tr><td colSpan={9}><div className="empty">No schools yet — add your first above.</div></td></tr>}
+            {tenants.length === 0 && <tr><td colSpan={6}><div className="empty">No schools yet — add your first above.</div></td></tr>}
             {tenants.map((t) => {
-              const sp = splitFor(t);
               return (
                 <tr key={t.id}>
                   <td><b>{t.name}</b><div className="muted" style={{ fontSize: 11 }}>{t.contact}</div></td>
                   <td className="mono">{t.short_code}</td>
                   <td><span className={"chip " + (t.type === "HBCU" ? "gold" : "blue")}>{t.type}</span></td>
-                  <td className="r mono">{Math.round(sp.school * 100)}%</td>
-                  <td className="r mono">{Math.round(sp.provider * 100)}%</td>
-                  <td className="r mono">{Math.round(sp.fq * 100)}%</td>
                   <td>{t.dsa === "Signed" ? <span className="chip green">Signed</span> : <span className="chip amber">{t.dsa}</span>}</td>
                   <td>{t.live ? <span className="chip green">Active</span> : <span className="chip gray">Prospect</span>}</td>
                   <td>

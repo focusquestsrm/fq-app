@@ -17,9 +17,7 @@ create table if not exists tenants (
   name         text not null,
   short_code   text not null,
   type         text not null default 'HBCU',
-  school_share   numeric not null default 0.40, -- 0..1
-  provider_share numeric,                        -- 0..1 (provider); null → derived as remainder
-  fq_share       numeric not null default 0.20,  -- 0..1 (remainder of school + provider)
+  -- Revenue splits live on the providers table, not the tenant.
   contact      text default '',
   dsa          text default 'Not started',      -- data-sharing agreement
   billing      text default 'Prospect',

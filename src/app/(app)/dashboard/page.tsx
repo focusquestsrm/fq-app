@@ -1,5 +1,5 @@
 import { getProfile, getTenants, getScope, getPrograms, getStudents, getLeads, getProviders, getClientView } from "@/lib/queries";
-import { isFQ, splitFor, splitForProvider, type Split } from "@/lib/types";
+import { isFQ, splitForProvider, ZERO_SPLIT, type Split } from "@/lib/types";
 import { STAGES, STA, enrolledRev } from "@/lib/constants";
 import { fmt, pct } from "@/lib/format";
 import { setScope } from "@/app/(app)/schools/actions";
@@ -57,21 +57,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const students = await getStudents(all ? undefined : scope || undefined);
   const leads = await getLeads(all ? undefined : scope || undefined);
 
-  // Revenue uses each program's PROVIDER split, falling back to the school's
-  // tenant split when a program has no matching provider.
+  // Providers are the single source of truth for revenue splits.
   const providers = await getProviders();
-  const splitMap = new Map(tenants.map((t) => [t.id, splitFor(t)] as const));
   const providerSplit = new Map(providers.map((p) => [p.name, splitForProvider(p)] as const));
   const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
-  const splitOf = (providerName: string, tenantId: string): Split =>
-    providerSplit.get(providerName) ?? splitMap.get(tenantId) ?? { school: 0, provider: 0, fq: 0 };
+  const splitOf = (providerName: string): Split => providerSplit.get(providerName) ?? ZERO_SPLIT;
 
   const enrolled = students.filter((s) => enrolledRev(s.stage));
   const gross = enrolled.reduce((a, s) => a + s.cost, 0);
   const collected = enrolled.reduce((a, s) => a + s.collected, 0);
   let schoolRev = 0, providerRev = 0, fqRev = 0;
   for (const s of enrolled) {
-    const spx = splitOf(s.provider, s.tenant_id);
+    const spx = splitOf(s.provider);
     schoolRev += s.cost * spx.school;
     providerRev += s.cost * spx.provider;
     fqRev += s.cost * spx.fq;
@@ -99,7 +96,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   // Per-program metrics (match on id, fall back to name within tenant).
   const progMetrics = activePrograms.map((p) => {
     const list = enrolled.filter((s) => s.program_id === p.id || (!s.program_id && s.program === p.name && s.tenant_id === p.tenant_id));
-    const spx = splitOf(p.provider, p.tenant_id);
+    const spx = splitOf(p.provider);
     const pGross = list.reduce((a, s) => a + s.cost, 0);
     return {
       p,
