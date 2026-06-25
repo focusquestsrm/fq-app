@@ -101,6 +101,17 @@ create table if not exists config_items (
   sort  integer default 0
 );
 
+-- ---- providers (each carries its own revenue split) ------------------------
+create table if not exists providers (
+  id             uuid primary key default gen_random_uuid(),
+  name           text not null unique,
+  provider_share numeric not null default 0.40,  -- 0..1
+  school_share   numeric not null default 0.40,  -- 0..1
+  fq_share       numeric not null default 0.20,  -- 0..1
+  sort           integer default 0,
+  created_at     timestamptz not null default now()
+);
+
 -- ============================================================================
 -- Helper functions for RLS  (security definer so they can read profiles)
 -- ============================================================================
@@ -168,6 +179,7 @@ alter table programs     enable row level security;
 alter table students     enable row level security;
 alter table leads        enable row level security;
 alter table config_items enable row level security;
+alter table providers    enable row level security;
 
 -- tenants -------------------------------------------------------------------
 drop policy if exists tenants_read on tenants;
@@ -235,4 +247,11 @@ drop policy if exists config_read on config_items;
 create policy config_read on config_items for select to authenticated using ( true );
 drop policy if exists config_write on config_items;
 create policy config_write on config_items for all to authenticated
+  using ( app_is_fq() ) with check ( app_is_fq() );
+
+-- providers: everyone authenticated can read; only FQ can edit ---------------
+drop policy if exists providers_read on providers;
+create policy providers_read on providers for select to authenticated using ( true );
+drop policy if exists providers_write on providers;
+create policy providers_write on providers for all to authenticated
   using ( app_is_fq() ) with check ( app_is_fq() );

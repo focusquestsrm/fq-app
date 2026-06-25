@@ -82,7 +82,22 @@ export type ConfigItem = {
   sort: number;
 };
 
+// A configurable provider with its own revenue split (fractions, 0..1).
+export type Provider = {
+  id: string;
+  name: string;
+  provider_share: number;
+  school_share: number;
+  fq_share: number;
+  sort: number;
+};
+
 export type Split = { school: number; provider: number; fq: number };
+
+// A provider's split, applied to programs/students that use that provider.
+export function splitForProvider(p: Pick<Provider, "school_share" | "provider_share" | "fq_share">): Split {
+  return { school: p.school_share ?? 0, provider: p.provider_share ?? 0, fq: p.fq_share ?? 0 };
+}
 
 export function splitFor(t: Pick<Tenant, "school_share" | "fq_share" | "provider_share">): Split {
   const school = t.school_share ?? 0.4;

@@ -2,18 +2,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { PALETTE } from "@/lib/constants";
 
+// Register a provider by name if it doesn't exist yet (default split applies;
+// edit the split on the Settings page).
 async function ensureProvider(name: string) {
   name = (name || "").trim();
   if (!name) return "";
   const supabase = createClient();
-  const { data } = await supabase.from("config_items").select("id").eq("kind", "provider").eq("value", name);
+  const { data } = await supabase.from("providers").select("id").eq("name", name);
   if (!data || data.length === 0) {
-    const { count } = await supabase.from("config_items").select("*", { count: "exact", head: true }).eq("kind", "provider");
-    await supabase.from("config_items").insert({
-      kind: "provider", value: name, color: PALETTE[(count || 0) % PALETTE.length], sort: count || 0,
-    });
+    const { count } = await supabase.from("providers").select("*", { count: "exact", head: true });
+    await supabase.from("providers").insert({ name, sort: count || 0 });
   }
   return name;
 }

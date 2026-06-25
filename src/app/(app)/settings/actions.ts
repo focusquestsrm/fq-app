@@ -23,3 +23,42 @@ export async function removeConfigItem(formData: FormData) {
   await supabase.from("config_items").delete().eq("id", String(formData.get("id")));
   revalidatePath("/settings");
 }
+
+// ---- Providers (each with its own revenue split) --------------------------
+const clampPct = (v: FormDataEntryValue | null, dflt: number) =>
+  Math.max(0, Math.min(1, Number(v ?? dflt) / 100));
+
+export async function addProvider(formData: FormData) {
+  const supabase = createClient();
+  const name = String(formData.get("name") || "").trim();
+  if (!name) return;
+  const { count } = await supabase.from("providers").select("*", { count: "exact", head: true });
+  await supabase.from("providers").insert({
+    name,
+    provider_share: clampPct(formData.get("provider_share"), 40),
+    school_share: clampPct(formData.get("school_share"), 40),
+    fq_share: clampPct(formData.get("fq_share"), 20),
+    sort: count || 0,
+  });
+  revalidatePath("/settings");
+  revalidatePath("/programs");
+  revalidatePath("/revenue");
+  revalidatePath("/dashboard");
+}
+
+export async function updateProviderShare(formData: FormData) {
+  const supabase = createClient();
+  const id = String(formData.get("id"));
+  const field = String(formData.get("field"));
+  if (!["provider_share", "school_share", "fq_share"].includes(field)) return;
+  await supabase.from("providers").update({ [field]: clampPct(formData.get("value"), 0) }).eq("id", id);
+  revalidatePath("/settings");
+  revalidatePath("/revenue");
+  revalidatePath("/dashboard");
+}
+
+export async function removeProvider(formData: FormData) {
+  const supabase = createClient();
+  await supabase.from("providers").delete().eq("id", String(formData.get("id")));
+  revalidatePath("/settings");
+}

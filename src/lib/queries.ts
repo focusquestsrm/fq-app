@@ -1,5 +1,5 @@
 import { createClient } from "./supabase/server";
-import type { Profile, Tenant, Program, Student, Lead, ConfigItem } from "./types";
+import type { Profile, Tenant, Program, Student, Lead, ConfigItem, Provider } from "./types";
 import { cookies } from "next/headers";
 
 export async function getProfile(): Promise<Profile | null> {
@@ -61,6 +61,12 @@ export async function getProfiles(): Promise<Profile[]> {
     .order("role")
     .order("full_name");
   return (data as Profile[]) ?? [];
+}
+
+export async function getProviders(): Promise<Provider[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("providers").select("*").order("sort").order("name");
+  return (data as Provider[]) ?? [];
 }
 
 export async function getConfig(): Promise<ConfigItem[]> {

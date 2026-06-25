@@ -28,4 +28,12 @@ insert into config_items (kind, value, sort) values
   ('funding','Workforce',0), ('funding','ETPL',1), ('funding','Cash',2)
 on conflict do nothing;
 
--- providers start empty — they register themselves as you add programs.
+-- providers (each with its own revenue split: provider / school / FQ). More
+-- register automatically as you add programs; edit splits on the Settings page.
+insert into providers (name, provider_share, school_share, fq_share, sort) values
+  ('MedCerts', 0.40, 0.40, 0.20, 0),
+  ('General Assembly', 0.40, 0.40, 0.20, 1),
+  ('Quantum Power', 0.40, 0.40, 0.20, 2),
+  ('Skill Up', 0.40, 0.40, 0.20, 3),
+  ('FocusQuest', 0.40, 0.40, 0.20, 4)
+on conflict (name) do nothing;

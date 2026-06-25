@@ -1,4 +1,4 @@
-import { getProfile, getTenants, getScope, getPrograms, getConfig } from "@/lib/queries";
+import { getProfile, getTenants, getScope, getPrograms, getConfig, getProviders } from "@/lib/queries";
 import { saveProgram, deleteProgram, updateProgramField } from "./actions";
 import { InlineNumber } from "@/components/InlineNumber";
 import { redirect } from "next/navigation";
@@ -18,7 +18,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
   const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
   const programs = await getPrograms(all ? undefined : scope);
   const config = await getConfig();
-  const providers = config.filter((c) => c.kind === "provider");
+  const providers = await getProviders();
   const categories = config.filter((c) => c.kind === "category");
   const funding = config.filter((c) => c.kind === "funding");
 
@@ -49,7 +49,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
             <div className="field"><label>Program name</label><input name="name" placeholder="e.g. Medical Assistant" defaultValue={editing?.name ?? ""} required /></div>
             <div className="field"><label>Provider</label>
               <input name="provider" list="providerlist" placeholder="type or pick" defaultValue={editing?.provider ?? ""} />
-              <datalist id="providerlist">{providers.map((p) => <option key={p.id} value={p.value} />)}</datalist>
+              <datalist id="providerlist">{providers.map((p) => <option key={p.id} value={p.name} />)}</datalist>
             </div>
             <div className="field"><label>Certification</label><input name="cert" placeholder="e.g. CCMA (NHA)" defaultValue={editing?.cert ?? ""} /></div>
           </div>
