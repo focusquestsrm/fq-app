@@ -1,0 +1,16 @@
+First Name,Last Name,Company/Account,Lead Owner,Product,Create Date,Lead Status,Priority Notes,Projected Enroll Date,Projected Start Date,Email,Phone
+Avery,Stone,Focus Quest,Jordan Blake,Medical Assistant (v24.10) HI-6000,1/6/2026,New,"New inquiry, left voicemail",2/1/2026,3/3/2026,avery.stone@example.com,555-0101
+Briar,Nguyen,Focus Quest,Jordan Blake,Medical Assistant (v25.8) HI-6000,1/7/2026,Contacted,"Spoke briefly, will call back",2/10/2026,3/10/2026,briar.nguyen@example.com,555-0102
+Cruz,Patel,Focus Quest,Sam Rivera,Pharmacy Technician (v23.4) PT-3000,1/7/2026,Attempting Contact,"Two attempts, no answer",,,cruz.patel@example.com,555-0103
+Dana,Okoro,Focus Quest,Sam Rivera,IT Support Specialist (v26.1) IT-9000,1/8/2026,Future Student,Wants summer cohort,6/1/2026,7/7/2026,dana.okoro@example.com,555-0104
+Elliot,Ramos,Focus Quest,Jordan Blake,Medical Assistant (v24.10) HI-6000,1/8/2026,Hibernating,Funding on hold,,,elliot.ramos@example.com,555-0105
+Frankie,Lee,Focus Quest,Taylor Cohen,Pharmacy Technician (v23.4) PT-3000,1/9/2026,Closed lost,Chose another provider,,,frankie.lee@example.com,555-0106
+Gray,Mendez,Focus Quest,Taylor Cohen,IT Support Specialist (v26.1) IT-9000,1/9/2026,Inactive,No response in 30 days,,,gray.mendez@example.com,555-0107
+Harper,Singh,Focus Quest,Jordan Blake,Medical Assistant (v25.8) HI-6000,1/10/2026,Contacted,Requested syllabus,2/15/2026,3/17/2026,harper.singh@example.com,555-0108
+Indi,Carter,Focus Quest,Sam Rivera,Medical Assistant (v24.10) HI-6000,1/10/2026,Future Student,Confirmed interest,3/1/2026,4/7/2026,indi.carter@example.com,555-0109
+Jules,Watson,Focus Quest,Taylor Cohen,Pharmacy Technician (v23.4) PT-3000,1/11/2026,New,Inbound web form,,,jules.watson@example.com,555-0110
+Kai,Flores,Focus Quest,Jordan Blake,IT Support Specialist (v26.1) IT-9000,1/11/2026,Attempting Contact,Left message,,,kai.flores@example.com,555-0111
+Logan,Brooks,Focus Quest,Sam Rivera,Medical Assistant (v25.8) HI-6000,1/12/2026,Contacted,Reviewing financing,2/20/2026,3/24/2026,logan.brooks@example.com,555-0112
+Marlow,Diaz,Focus Quest,Taylor Cohen,Pharmacy Technician (v23.4) PT-3000,1/12/2026,Future Student,Scheduling enrollment,3/5/2026,4/14/2026,marlow.diaz@example.com,555-0113
+Noor,Abbas,Focus Quest,Jordan Blake,Medical Assistant (v24.10) HI-6000,1/13/2026,Hibernating,Reconnect next month,,,noor.abbas@example.com,555-0114
+Avery,Stone,Focus Quest,Jordan Blake,Medical Assistant (v25.8) HI-6000,1/14/2026,Contacted,"Duplicate row on purpose, same email",2/1/2026,3/3/2026,avery.stone@example.com,555-0101
