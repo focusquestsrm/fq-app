@@ -51,7 +51,20 @@ export async function updateProviderShare(formData: FormData) {
   const id = String(formData.get("id"));
   const field = String(formData.get("field"));
   if (!["provider_share", "school_share", "fq_share"].includes(field)) return;
-  await supabase.from("providers").update({ [field]: clampPct(formData.get("value"), 0) }).eq("id", id);
+
+  const { data: row } = await supabase
+    .from("providers").select("provider_share,school_share,fq_share").eq("id", id).single();
+  if (!row) return;
+  let school = row.school_share, provider = row.provider_share, fq = row.fq_share;
+  const v = clampPct(formData.get("value"), 0);
+  // Editing School or Provider auto-fills FocusQuest as the remainder (kept 0..1);
+  // editing FocusQuest directly keeps the entered value (still editable).
+  if (field === "school_share") { school = v; fq = Math.max(0, Math.min(1, 1 - school - provider)); }
+  else if (field === "provider_share") { provider = v; fq = Math.max(0, Math.min(1, 1 - school - provider)); }
+  else { fq = v; }
+
+  await supabase.from("providers")
+    .update({ school_share: school, provider_share: provider, fq_share: fq }).eq("id", id);
   revalidatePath("/settings");
   revalidatePath("/revenue");
   revalidatePath("/dashboard");

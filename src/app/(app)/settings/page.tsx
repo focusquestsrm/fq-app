@@ -63,7 +63,7 @@ export default async function SettingsPage() {
                   <td className="r"><InlineNumber id={p.id} field="provider_share" value={Math.round(p.provider_share * 100)} action={updateProviderShare} /></td>
                   <td className="r"><InlineNumber id={p.id} field="school_share" value={Math.round(p.school_share * 100)} action={updateProviderShare} /></td>
                   <td className="r"><InlineNumber id={p.id} field="fq_share" value={Math.round(p.fq_share * 100)} action={updateProviderShare} /></td>
-                  <td className="r"><span className={"chip " + (total === 100 ? "green" : "amber")}>{total}%</span></td>
+                  <td className="r"><span className={"chip " + (total === 100 ? "green" : "red")}>{total}%</span></td>
                   <td><form action={removeProvider}><input type="hidden" name="id" value={p.id} /><button className="btn sm danger">✕</button></form></td>
                 </tr>
               );
@@ -77,7 +77,7 @@ export default async function SettingsPage() {
           <div className="field" style={{ width: 96 }}><label>FQ %</label><input name="fq_share" type="number" defaultValue={20} min={0} max={100} /></div>
           <button className="btn gold sm">+ Add provider</button>
         </form>
-        <div className="srcnote" style={{ padding: "0 18px 14px" }}>A program uses its provider&apos;s split for all revenue calculations. Shares should total 100%.</div>
+        <div className="srcnote" style={{ padding: "0 18px 14px" }}>A program uses its provider&apos;s split for all revenue. Editing School or Provider auto-fills FocusQuest as the remainder; FocusQuest stays editable. The three must total 100% (Total turns red otherwise).</div>
       </div>
 
       <div className="cards c2">
