@@ -66,7 +66,7 @@ When you add a module, copy the structure of an existing page (e.g.
    dispositions are rows in `config_items`, managed on the Settings page. Never
    hardcode these lists in components.
 3. **Revenue numbers derive from the entered split**, never hardcoded. School %
-   and Publisher % (`provider_share`) are entered and stored on the tenant;
+   and Provider % (`provider_share`) are entered and stored on the tenant;
    FocusQuest % = `1 - school - provider` (the remainder). Legacy rows with a null
    `provider_share` fall back to `provider = 1 - school - fq`. School portals only
    ever see the school %.

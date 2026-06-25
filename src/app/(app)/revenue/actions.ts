@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 export async function updateSplit(formData: FormData) {
   const supabase = createClient();
   const id = String(formData.get("tenant_id"));
-  // Enter School % and Publisher %; FocusQuest % is the remainder.
+  // Enter School % and Provider %; FocusQuest % is the remainder.
   let school = Math.max(0, Math.min(1, Number(formData.get("school_share") || 0) / 100));
   let provider = Math.max(0, Math.min(1, Number(formData.get("provider_share") || 0) / 100));
   if (school + provider > 1) provider = Math.max(0, 1 - school);

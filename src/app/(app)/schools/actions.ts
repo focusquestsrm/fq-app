@@ -14,7 +14,7 @@ export async function setScope(formData: FormData) {
 export async function saveTenant(formData: FormData) {
   const supabase = createClient();
   const id = String(formData.get("id") || "");
-  // Enter School % and Publisher %; FocusQuest % is the remainder.
+  // Enter School % and Provider %; FocusQuest % is the remainder.
   const school = Math.max(0, Math.min(1, Number(formData.get("school_share") || 40) / 100));
   let provider = Math.max(0, Math.min(1, Number(formData.get("provider_share") || 40) / 100));
   if (school + provider > 1) provider = Math.max(0, 1 - school);

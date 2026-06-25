@@ -21,7 +21,7 @@ export function SplitForm({
             onBlur={() => ref.current?.requestSubmit()} />
         </div>
         <div className="field">
-          <label>Publisher %</label>
+          <label>Provider %</label>
           <input name="provider_share" type="number" min={0} max={100} defaultValue={provider}
             onBlur={() => ref.current?.requestSubmit()} />
         </div>

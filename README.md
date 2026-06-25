@@ -63,7 +63,7 @@ variables in the Vercel project settings. That's it — it's live and shared.
 | Super Admin / Account Mgr / Finance | all schools | yes (FQ) |
 | School Executive / Enrollment Mgr | their school only | their school |
 | Success Coach | their school | success items |
-| Provider / Publisher | assigned records | — |
+| Provider | assigned records | — |
 | Read-only Auditor | their school | — |
 
 Access is enforced in the database itself via RLS — not just hidden in the UI —

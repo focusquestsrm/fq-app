@@ -47,7 +47,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
           {editing && <input type="hidden" name="id" value={editing.id} />}
           <div className="frow f3">
             <div className="field"><label>Program name</label><input name="name" placeholder="e.g. Medical Assistant" defaultValue={editing?.name ?? ""} required /></div>
-            <div className="field"><label>Provider / publisher</label>
+            <div className="field"><label>Provider</label>
               <input name="provider" list="providerlist" placeholder="type or pick" defaultValue={editing?.provider ?? ""} />
               <datalist id="providerlist">{providers.map((p) => <option key={p.id} value={p.value} />)}</datalist>
             </div>

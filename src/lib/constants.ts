@@ -19,7 +19,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   schoolexec: "School Admin",
   enrollmgr: "School Editor",
   coach: "Student Success Coach",
-  provider: "Provider / Publisher",
+  provider: "Provider",
   finance: "Finance / Billing",
   auditor: "School Viewer",
 };

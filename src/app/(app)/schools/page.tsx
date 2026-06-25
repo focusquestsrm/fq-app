@@ -36,10 +36,10 @@ export default async function SchoolsPage({ searchParams }: { searchParams: { ed
           </div>
           <div className="frow f3">
             <div className="field"><label>School %</label><input name="school_share" type="number" defaultValue={editSplit ? Math.round(editSplit.school * 100) : 40} min={0} max={100} /></div>
-            <div className="field"><label>Publisher %</label><input name="provider_share" type="number" defaultValue={editSplit ? Math.round(editSplit.provider * 100) : 40} min={0} max={100} /></div>
+            <div className="field"><label>Provider %</label><input name="provider_share" type="number" defaultValue={editSplit ? Math.round(editSplit.provider * 100) : 40} min={0} max={100} /></div>
             <div className="field"><label>Primary contact</label><input name="contact" placeholder="Office of Online Programs" defaultValue={editing?.contact ?? ""} /></div>
           </div>
-          <div className="muted" style={{ fontSize: 11, marginTop: -6 }}>FocusQuest % is the remainder: 100 − School − Publisher.</div>
+          <div className="muted" style={{ fontSize: 11, marginTop: -6 }}>FocusQuest % is the remainder: 100 − School − Provider.</div>
           <div style={{ display: "flex", gap: 8 }}>
             <button className="btn gold">{editing ? "Save changes" : "+ Create tenant"}</button>
             {editing
@@ -51,7 +51,7 @@ export default async function SchoolsPage({ searchParams }: { searchParams: { ed
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table>
-          <thead><tr><th>Institution</th><th>Code</th><th>Type</th><th className="r">School %</th><th className="r">Publisher %</th><th className="r">FocusQuest %</th><th>DSA</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Institution</th><th>Code</th><th>Type</th><th className="r">School %</th><th className="r">Provider %</th><th className="r">FocusQuest %</th><th>DSA</th><th>Status</th><th></th></tr></thead>
           <tbody>
             {tenants.length === 0 && <tr><td colSpan={9}><div className="empty">No schools yet — add your first above.</div></td></tr>}
             {tenants.map((t) => {
