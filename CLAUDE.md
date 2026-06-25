@@ -65,11 +65,16 @@ When you add a module, copy the structure of an existing page (e.g.
 2. **Everything configurable.** Institution types, providers, payment sources and
    dispositions are rows in `config_items`, managed on the Settings page. Never
    hardcode these lists in components.
-3. **Revenue numbers derive from the entered split**, never hardcoded. School %
-   and Provider % (`provider_share`) are entered and stored on the tenant;
-   FocusQuest % = `1 - school - provider` (the remainder). Legacy rows with a null
-   `provider_share` fall back to `provider = 1 - school - fq`. School portals only
-   ever see the school %.
+3. **Revenue numbers derive from configured splits**, never hardcoded. Each
+   **provider** (row in `providers`) carries its own split (`provider_share` /
+   `school_share` / `fq_share`, 0..1) and a program uses **its provider's split**
+   for all revenue. When a program has no matching provider, fall back to the
+   **tenant** split (`tenants.school_share` / `provider_share` / `fq_share`;
+   `splitFor()`), where FocusQuest % is the remainder. Helpers: `splitForProvider()`,
+   `splitFor()`. School portals only ever see the school %.
+   Programs/catalog and revenue settings are **FocusQuest-managed; schools are
+   read-only** (server actions require `isFQ`). FQ can preview a school via the
+   **Client View** toggle (`clientview` cookie → school-share-only, read-only).
 4. **AI scoring is advisory only** — human oversight + equity review. Never
    auto-enroll, auto-deny, or auto-drop a student.
 5. **Tenant isolation is enforced in the database** via RLS, not just the UI.
@@ -92,7 +97,7 @@ Helpers: `isFQ()`, `canEdit()` in `src/lib/types.ts`; SQL mirrors them
 - Journey stages: 14-stage model in `src/lib/constants.ts` (`STAGES`, `STA`).
 
 ## Data model (Postgres — see `supabase/schema.sql`)
-`tenants, profiles, programs, students, leads, config_items`. Money split fields:
+`tenants, profiles, programs, students, leads, config_items, providers`. Money split fields:
 `tenants.school_share`, `tenants.provider_share`, `tenants.fq_share` (0..1). Run `schema.sql` then
 `seed.sql` on a fresh Supabase project.
 
