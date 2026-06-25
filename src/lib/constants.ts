@@ -36,6 +36,7 @@ export const NAV: (NavItem | NavGroup)[] = [
     group: "Setup",
     items: [
       { href: "/schools", label: "Tenant Management", fqOnly: true },
+      { href: "/intake", label: "Data Intake", fqOnly: true },
       { href: "/costs", label: "Costs & Profit", fqOnly: true },
       { href: "/users", label: "Users & Permissions", usersNav: true },
       { href: "/settings", label: "Configuration", fqOnly: true },
