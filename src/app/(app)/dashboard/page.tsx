@@ -1,5 +1,5 @@
-import { getProfile, getTenants, getScope, getPrograms, getStudents, getLeads } from "@/lib/queries";
-import { isFQ, splitFor } from "@/lib/types";
+import { getProfile, getTenants, getScope, getPrograms, getStudents, getLeads, getProviders } from "@/lib/queries";
+import { isFQ, splitFor, splitForProvider, type Split } from "@/lib/types";
 import { STAGES, STA, enrolledRev } from "@/lib/constants";
 import { fmt, pct } from "@/lib/format";
 import Link from "next/link";
@@ -54,18 +54,23 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const students = await getStudents(all ? undefined : scope || undefined);
   const leads = await getLeads(all ? undefined : scope || undefined);
 
-  // Aggregate revenue per student using that student's own school split.
+  // Revenue uses each program's PROVIDER split, falling back to the school's
+  // tenant split when a program has no matching provider.
+  const providers = await getProviders();
   const splitMap = new Map(tenants.map((t) => [t.id, splitFor(t)] as const));
+  const providerSplit = new Map(providers.map((p) => [p.name, splitForProvider(p)] as const));
   const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
+  const splitOf = (providerName: string, tenantId: string): Split =>
+    providerSplit.get(providerName) ?? splitMap.get(tenantId) ?? { school: 0, provider: 0, fq: 0 };
 
   const enrolled = students.filter((s) => enrolledRev(s.stage));
   const gross = enrolled.reduce((a, s) => a + s.cost, 0);
   const collected = enrolled.reduce((a, s) => a + s.collected, 0);
-  let schoolRev = 0, fqRev = 0;
+  let schoolRev = 0, providerRev = 0, fqRev = 0;
   for (const s of enrolled) {
-    const spx = splitMap.get(s.tenant_id);
-    if (!spx) continue;
+    const spx = splitOf(s.provider, s.tenant_id);
     schoolRev += s.cost * spx.school;
+    providerRev += s.cost * spx.provider;
     fqRev += s.cost * spx.fq;
   }
 
@@ -88,14 +93,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   // Per-program metrics (match on id, fall back to name within tenant).
   const progMetrics = activePrograms.map((p) => {
     const list = enrolled.filter((s) => s.program_id === p.id || (!s.program_id && s.program === p.name && s.tenant_id === p.tenant_id));
-    const spx = splitMap.get(p.tenant_id);
+    const spx = splitOf(p.provider, p.tenant_id);
     const pGross = list.reduce((a, s) => a + s.cost, 0);
     return {
       p,
       cnt: list.length,
       gross: pGross,
-      school: spx ? pGross * spx.school : 0,
-      fq: spx ? pGross * spx.fq : 0,
+      school: pGross * spx.school,
+      provider: pGross * spx.provider,
+      fq: pGross * spx.fq,
       projected: p.goal * p.cost, // cohort goal × cost — NOT a forecast
     };
   });
@@ -192,13 +198,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
             <h3>Live Revenue Snapshot</h3>
             <div className="split">
               <div className="s1" style={{ width: pct(gross > 0 ? schoolRev / gross : 0) }}>School {fmt(schoolRev)}</div>
-              <div className="s2" style={{ width: pct(gross > 0 ? (gross - schoolRev - fqRev) / gross : 0) }}>Provider {fmt(gross - schoolRev - fqRev)}</div>
+              <div className="s2" style={{ width: pct(gross > 0 ? providerRev / gross : 0) }}>Provider {fmt(providerRev)}</div>
               <div className="s3" style={{ width: pct(gross > 0 ? fqRev / gross : 0) }}>FQ {fmt(fqRev)}</div>
             </div>
             <div className="srcnote">
-              {all
-                ? `Aggregated across ${tenants.length} school${tenants.length === 1 ? "" : "s"} — each school uses its own revenue-sharing model.`
-                : `Revenue figures are calculated based on the configured revenue-sharing model: School ${pct(splitFor(tenant!).school)} | Provider ${pct(splitFor(tenant!).provider)} | FocusQuest ${pct(splitFor(tenant!).fq)}`}
+              Revenue figures are calculated based on the configured revenue-sharing model: School {pct(gross > 0 ? schoolRev / gross : 0)} | Provider {pct(gross > 0 ? providerRev / gross : 0)} | FocusQuest {pct(gross > 0 ? fqRev / gross : 0)}
             </div>
           </div>
 

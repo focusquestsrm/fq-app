@@ -1,5 +1,5 @@
-import { getProfile, getTenants, getScope, getPrograms } from "@/lib/queries";
-import { isFQ, splitFor } from "@/lib/types";
+import { getProfile, getTenants, getScope, getPrograms, getProviders } from "@/lib/queries";
+import { isFQ, splitFor, splitForProvider, type Split } from "@/lib/types";
 import { fmt, pct } from "@/lib/format";
 import { updateSplit } from "./actions";
 import { updateProgramField } from "../programs/actions";
@@ -19,9 +19,20 @@ export default async function RevenuePage() {
   if (!tenant) return <div className="empty">Create a school first (Tenant Management).</div>;
 
   const fq = isFQ(profile.role);
-  const sp = splitFor(tenant);
+  const sp = splitFor(tenant); // tenant default split (fallback + school-portal share)
   const programs = (await getPrograms(scope || undefined)).filter((p) => p.active);
-  const goalGross = programs.reduce((a, p) => a + p.goal * p.cost, 0);
+
+  // Each program uses its provider's split; fall back to the tenant split.
+  const providerSplit = new Map((await getProviders()).map((p) => [p.name, splitForProvider(p)] as const));
+  const splitOf = (providerName: string): Split => providerSplit.get(providerName) ?? sp;
+
+  let tCohort = 0, tGross = 0, tSchool = 0, tProvider = 0, tFq = 0;
+  for (const p of programs) {
+    const gr = p.goal * p.cost;
+    const spx = splitOf(p.provider);
+    tCohort += p.goal; tGross += gr;
+    tSchool += gr * spx.school; tProvider += gr * spx.provider; tFq += gr * spx.fq;
+  }
 
   return (
     <>
@@ -50,37 +61,40 @@ export default async function RevenuePage() {
         <table>
           <thead>
             <tr>
-              <th>Program</th><th className="r">Cohort size</th><th className="r">Cost / student</th>
-              <th className="r">Gross</th><th className="r">School ({pct(sp.school)})</th>
-              {fq && <th className="r">Provider ({pct(sp.provider)})</th>}
-              {fq && <th className="r">FQ ({pct(sp.fq)})</th>}
+              <th>Program</th><th>Provider</th><th className="r">Cohort size</th><th className="r">Cost / student</th>
+              <th className="r">Gross</th><th className="r">School</th>
+              {fq && <th className="r">Provider</th>}
+              {fq && <th className="r">FQ</th>}
             </tr>
           </thead>
           <tbody>
-            {programs.length === 0 && <tr><td colSpan={fq ? 7 : 5}><div className="empty">No active programs yet. Add programs in the catalog.</div></td></tr>}
+            {programs.length === 0 && <tr><td colSpan={fq ? 8 : 6}><div className="empty">No active programs yet. Add programs in the catalog.</div></td></tr>}
             {programs.map((p) => {
               const gr = p.goal * p.cost;
+              const spx = splitOf(p.provider);
               return (
                 <tr key={p.id}>
                   <td><b>{p.name}</b></td>
+                  <td>{p.provider || "—"}</td>
                   <td className="r"><InlineNumber id={p.id} field="goal" value={p.goal} action={updateProgramField} /></td>
                   <td className="r"><InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /></td>
                   <td className="r money">{fmt(gr)}</td>
-                  <td className="r money" style={{ color: "var(--gold-deep)" }}>{fmt(gr * sp.school)}</td>
-                  {fq && <td className="r money">{fmt(gr * sp.provider)}</td>}
-                  {fq && <td className="r money">{fmt(gr * sp.fq)}</td>}
+                  <td className="r money" style={{ color: "var(--gold-deep)" }}>{fmt(gr * spx.school)}</td>
+                  {fq && <td className="r money">{fmt(gr * spx.provider)}</td>}
+                  {fq && <td className="r money">{fmt(gr * spx.fq)}</td>}
                 </tr>
               );
             })}
             {programs.length > 0 && (
               <tr style={{ borderTop: "2px solid var(--line)" }}>
                 <td><b>Total at full cohorts</b></td>
-                <td className="r mono">{programs.reduce((a, p) => a + p.goal, 0)}</td>
                 <td></td>
-                <td className="r money"><b>{fmt(goalGross)}</b></td>
-                <td className="r money" style={{ color: "var(--gold-deep)" }}><b>{fmt(goalGross * sp.school)}</b></td>
-                {fq && <td className="r money"><b>{fmt(goalGross * sp.provider)}</b></td>}
-                {fq && <td className="r money"><b>{fmt(goalGross * sp.fq)}</b></td>}
+                <td className="r mono">{tCohort}</td>
+                <td></td>
+                <td className="r money"><b>{fmt(tGross)}</b></td>
+                <td className="r money" style={{ color: "var(--gold-deep)" }}><b>{fmt(tSchool)}</b></td>
+                {fq && <td className="r money"><b>{fmt(tProvider)}</b></td>}
+                {fq && <td className="r money"><b>{fmt(tFq)}</b></td>}
               </tr>
             )}
           </tbody>
