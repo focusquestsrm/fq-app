@@ -12,7 +12,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const tenants = await getTenants();
   const scope = await getScope(profile, tenants);
-  const clientView = getClientView();
+  // Client View only applies while previewing a single school (never on All Schools),
+  // so going back to All Schools can't leave you stuck in a school's view.
+  const clientView = isFQ(profile.role) && scope !== "all" && getClientView();
 
   return (
     <div className="shell">
