@@ -2,6 +2,7 @@ import { getProfile, getTenants, getScope, getPrograms, getStudents, getLeads, g
 import { isFQ, splitFor, splitForProvider, type Split } from "@/lib/types";
 import { STAGES, STA, enrolledRev } from "@/lib/constants";
 import { fmt, pct } from "@/lib/format";
+import { setScope } from "@/app/(app)/schools/actions";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -77,6 +78,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   const activePrograms = programs.filter((p) => p.active);
 
+  // Per-school rollups for the All-Schools tile overview.
+  const enrolledByTenant = new Map<string, number>();
+  for (const s of enrolled) enrolledByTenant.set(s.tenant_id, (enrolledByTenant.get(s.tenant_id) || 0) + 1);
+  const progByTenant = new Map<string, number>();
+  for (const p of activePrograms) progByTenant.set(p.tenant_id, (progByTenant.get(p.tenant_id) || 0) + 1);
+
   // Funnel across the 14-stage model (leads + students combined).
   const pipeline = [...leads.map((l) => l.stage), ...students.map((s) => s.stage)];
   const atStage = STAGES.map((_, i) => pipeline.filter((s) => s === i).length);
@@ -125,6 +132,20 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
       {tab === "overview" && (
         <>
+          {all && (
+            <div className="cards c3" style={{ marginBottom: 16 }}>
+              {tenants.map((t) => (
+                <form key={t.id} action={setScope}>
+                  <input type="hidden" name="scope" value={t.id} />
+                  <button className="card" style={{ width: "100%", textAlign: "left", cursor: "pointer", marginBottom: 0 }}>
+                    <div style={{ fontFamily: "var(--font-display)", fontWeight: 700 }}>{t.name}</div>
+                    <div className="muted" style={{ fontSize: 11 }}>{t.short_code}</div>
+                    <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>{enrolledByTenant.get(t.id) || 0} enrolled · {progByTenant.get(t.id) || 0} active programs</div>
+                  </button>
+                </form>
+              ))}
+            </div>
+          )}
           <div className="cards c4">
             <div className="card kpi"><div className="lbl">Active leads</div><div className="val">{activeLeads}</div></div>
             <div className="card kpi"><div className="lbl">Applications started</div><div className="val">{appsStarted}</div></div>
