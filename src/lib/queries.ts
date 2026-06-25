@@ -71,12 +71,13 @@ export function getClientView(): boolean {
 
 export async function getProviders(): Promise<Provider[]> {
   const supabase = createClient();
-  const { data } = await supabase.from("providers").select("*").order("sort").order("name");
+  const { data } = await supabase.from("providers").select("*").order("name");
   return (data as Provider[]) ?? [];
 }
 
 export async function getConfig(): Promise<ConfigItem[]> {
   const supabase = createClient();
-  const { data } = await supabase.from("config_items").select("*").order("sort");
+  // Alphabetical so every dropdown built from these lists is sorted.
+  const { data } = await supabase.from("config_items").select("*").order("value");
   return (data as ConfigItem[]) ?? [];
 }
