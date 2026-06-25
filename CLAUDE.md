@@ -97,8 +97,11 @@ Helpers: `isFQ()`, `canEdit()` in `src/lib/types.ts`; SQL mirrors them
 - Journey stages: 14-stage model in `src/lib/constants.ts` (`STAGES`, `STA`).
 
 ## Data model (Postgres — see `supabase/schema.sql`)
-`tenants, profiles, programs, students, leads, config_items, providers, fq_costs`
-(fq_costs = FocusQuest-only cost line items for the Costs & Profitability page). Revenue
+`tenants, profiles, programs, students, leads, config_items, providers, fq_costs,
+import_profiles, import_batches` (fq_costs = FocusQuest-only cost line items;
+import_* = Data Intake provider-report importer — FQ-only reusable mapping profiles
++ upload/import batches; leads has extra intake columns email/raw_status/notes/
+lead_owner/projected_*). Revenue
 splits live on `providers` (`provider_share`/`school_share`/`fq_share`, 0..1) — the
 tenant has no split columns. Run `schema.sql` then `seed.sql` on a fresh Supabase project.
 
