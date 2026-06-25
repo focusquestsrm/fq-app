@@ -16,7 +16,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="shell">
-      <Sidebar fq={isFQ(profile.role)} canUsers={isFQ(profile.role) || canManageUsers(profile.role)} />
+      <Sidebar
+        fq={isFQ(profile.role)}
+        canUsers={isFQ(profile.role) || canManageUsers(profile.role)}
+        showSetup={isFQ(profile.role) && !clientView}
+      />
       <div className="main">
         <Topbar profile={profile} tenants={tenants} scope={scope} clientView={clientView} />
         <div className="content">{children}</div>

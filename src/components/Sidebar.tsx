@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV, type NavItem, type NavGroup } from "@/lib/constants";
 
-export function Sidebar({ fq, canUsers }: { fq: boolean; canUsers: boolean }) {
+export function Sidebar({ fq, canUsers, showSetup }: { fq: boolean; canUsers: boolean; showSetup: boolean }) {
   const path = usePathname();
   const visible = (n: NavItem) => (n.fqOnly ? fq : n.usersNav ? canUsers : true);
 
@@ -23,6 +23,7 @@ export function Sidebar({ fq, canUsers }: { fq: boolean; canUsers: boolean }) {
       <nav className="nav">
         {NAV.map((n, i) => {
           if ("group" in n) {
+            if (!showSetup) return null; // Setup is FocusQuest-only (hidden in Client View)
             const items = (n as NavGroup).items.filter(visible);
             if (items.length === 0) return null;
             return (
