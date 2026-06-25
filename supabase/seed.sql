@@ -9,7 +9,8 @@ on conflict do nothing;
 
 insert into config_items (kind, value, sort) values
   ('payment','Cash / self-pay',0), ('payment','Loan',1), ('payment','Workforce',2),
-  ('payment','ETPL',3), ('payment','Grant',4), ('payment','Employer',5), ('payment','Other',6)
+  ('payment','ETPL',3), ('payment','Grant',4), ('payment','Employer',5),
+  ('payment','Title II',6), ('payment','Other',7)
 on conflict do nothing;
 
 insert into config_items (kind, value, sort) values

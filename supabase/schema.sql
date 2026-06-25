@@ -87,7 +87,7 @@ create table if not exists leads (
   program     text default '',
   source      text default 'Manual',
   disposition text default 'Contacted',
-  stage       integer not null default 0,
+  stage       integer not null default 2,        -- "Sent to provider" (LeadHoop routes instantly)
   days        integer not null default 0,
   created_at  timestamptz not null default now()
 );
