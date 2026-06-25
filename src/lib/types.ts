@@ -89,6 +89,14 @@ export type Provider = {
   sort: number;
 };
 
+// FocusQuest-level cost line items (org-wide profitability).
+export type FQCost = {
+  id: string;
+  label: string;
+  amount: number;
+  created_at: string;
+};
+
 export type Split = { school: number; provider: number; fq: number };
 
 // Providers are the single source of truth for revenue splits. A program/student

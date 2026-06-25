@@ -99,6 +99,14 @@ create table if not exists config_items (
   sort  integer default 0
 );
 
+-- ---- FocusQuest cost line items (org-wide profitability; FQ-only) ----------
+create table if not exists fq_costs (
+  id         uuid primary key default gen_random_uuid(),
+  label      text not null,
+  amount     numeric not null default 0,
+  created_at timestamptz not null default now()
+);
+
 -- ---- providers (each carries its own revenue split) ------------------------
 create table if not exists providers (
   id             uuid primary key default gen_random_uuid(),
@@ -178,6 +186,7 @@ alter table students     enable row level security;
 alter table leads        enable row level security;
 alter table config_items enable row level security;
 alter table providers    enable row level security;
+alter table fq_costs     enable row level security;
 
 -- tenants -------------------------------------------------------------------
 drop policy if exists tenants_read on tenants;
@@ -253,3 +262,12 @@ create policy providers_read on providers for select to authenticated using ( tr
 drop policy if exists providers_write on providers;
 create policy providers_write on providers for all to authenticated
   using ( app_is_fq() ) with check ( app_is_fq() );
+
+-- fq_costs: FocusQuest-only (hidden from schools). Read = any FQ; write = FQ
+-- staff except the read-only FQ Viewer.
+drop policy if exists fq_costs_read on fq_costs;
+create policy fq_costs_read on fq_costs for select to authenticated using ( app_is_fq() );
+drop policy if exists fq_costs_write on fq_costs;
+create policy fq_costs_write on fq_costs for all to authenticated
+  using ( app_role() in ('superadmin','accountmgr','finance') )
+  with check ( app_role() in ('superadmin','accountmgr','finance') );

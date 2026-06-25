@@ -1,5 +1,5 @@
 import { createClient } from "./supabase/server";
-import type { Profile, Tenant, Program, Student, Lead, ConfigItem, Provider } from "./types";
+import type { Profile, Tenant, Program, Student, Lead, ConfigItem, Provider, FQCost } from "./types";
 import { cookies } from "next/headers";
 
 export async function getProfile(): Promise<Profile | null> {
@@ -73,6 +73,13 @@ export async function getProviders(): Promise<Provider[]> {
   const supabase = createClient();
   const { data } = await supabase.from("providers").select("*").order("name");
   return (data as Provider[]) ?? [];
+}
+
+// FocusQuest cost line items. RLS restricts this to FQ staff only.
+export async function getFQCosts(): Promise<FQCost[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("fq_costs").select("*").order("created_at");
+  return (data as FQCost[]) ?? [];
 }
 
 export async function getConfig(): Promise<ConfigItem[]> {
