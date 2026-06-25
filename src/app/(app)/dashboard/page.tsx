@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 const APP_STARTED = STAGES.indexOf("Application started"); // 4
+const ENROLL_PENDING = STAGES.indexOf("Enrollment pending"); // 6 — admitted, not yet enrolled
 
 const TABS: [string, string][] = [
   ["overview", "Enrollment Overview"],
@@ -84,11 +85,26 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     .filter((s) => s.stage === STA.atRisk)
     .reduce((a, s) => a + Math.max(0, s.cost - s.collected), 0);
 
-  // Per-program enrolled counts (match on id, fall back to name within tenant).
-  const progMetrics = activePrograms.map((p) => ({
-    p,
-    cnt: enrolled.filter((s) => s.program_id === p.id || (!s.program_id && s.program === p.name && s.tenant_id === p.tenant_id)).length,
-  }));
+  // Per-program metrics (match on id, fall back to name within tenant).
+  const progMetrics = activePrograms.map((p) => {
+    const list = enrolled.filter((s) => s.program_id === p.id || (!s.program_id && s.program === p.name && s.tenant_id === p.tenant_id));
+    const spx = splitMap.get(p.tenant_id);
+    const pGross = list.reduce((a, s) => a + s.cost, 0);
+    return {
+      p,
+      cnt: list.length,
+      gross: pGross,
+      school: spx ? pGross * spx.school : 0,
+      fq: spx ? pGross * spx.fq : 0,
+      projected: p.goal * p.cost, // cohort goal × cost — NOT a forecast
+    };
+  });
+
+  // Revenue leakage (observed, not predicted): dropped + admitted-not-enrolled.
+  const dropped = students.filter((s) => s.stage === STA.dropped);
+  const admittedNotEnrolled = students.filter((s) => s.stage === ENROLL_PENDING);
+  const droppedGross = dropped.reduce((a, s) => a + s.cost, 0);
+  const admittedGross = admittedNotEnrolled.reduce((a, s) => a + s.cost, 0);
 
   return (
     <>
@@ -184,6 +200,65 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
                 ? `Aggregated across ${tenants.length} school${tenants.length === 1 ? "" : "s"} — each school uses its own revenue-sharing model.`
                 : `Revenue figures are calculated based on the configured revenue-sharing model: School ${pct(splitFor(tenant!).school)} | Provider ${pct(splitFor(tenant!).provider)} | FocusQuest ${pct(splitFor(tenant!).fq)}`}
             </div>
+          </div>
+
+          <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+            <div style={{ padding: "16px 18px 0" }}><h3>Revenue by Program</h3></div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Program</th>{all && <th>School</th>}
+                  <th className="r">Students</th><th className="r">Gross</th>
+                  <th className="r">School share</th><th className="r">FQ share</th>
+                  <th className="r">Projected at goal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {progMetrics.length === 0 && <tr><td colSpan={all ? 7 : 6}><div className="empty">No active programs yet.</div></td></tr>}
+                {progMetrics.map((m) => (
+                  <tr key={m.p.id}>
+                    <td><b>{m.p.name}</b></td>
+                    {all && <td className="mono">{codeOf.get(m.p.tenant_id) ?? "—"}</td>}
+                    <td className="r mono">{m.cnt}</td>
+                    <td className="r money">{fmt(m.gross)}</td>
+                    <td className="r money" style={{ color: "var(--gold-deep)" }}>{fmt(m.school)}</td>
+                    <td className="r money">{fmt(m.fq)}</td>
+                    <td className="r money">{fmt(m.projected)}</td>
+                  </tr>
+                ))}
+                {progMetrics.length > 0 && (
+                  <tr style={{ borderTop: "2px solid var(--line)" }}>
+                    <td><b>Total</b></td>{all && <td></td>}
+                    <td className="r mono"><b>{progMetrics.reduce((a, m) => a + m.cnt, 0)}</b></td>
+                    <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.gross, 0))}</b></td>
+                    <td className="r money" style={{ color: "var(--gold-deep)" }}><b>{fmt(progMetrics.reduce((a, m) => a + m.school, 0))}</b></td>
+                    <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.fq, 0))}</b></td>
+                    <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.projected, 0))}</b></td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            <div className="srcnote" style={{ padding: "0 18px 14px" }}>“Projected at goal” = cohort goal × cost. It is not an AI forecast.</div>
+          </div>
+
+          <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+            <div style={{ padding: "16px 18px 0" }}><h3>Revenue Leakage</h3></div>
+            <table>
+              <thead><tr><th>Category</th><th className="r">Students</th><th className="r">Lost / at-risk gross</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><b>Dropped</b><div className="muted" style={{ fontSize: 11 }}>students marked dropped</div></td>
+                  <td className="r mono">{dropped.length}</td>
+                  <td className="r money" style={{ color: "var(--red)" }}>{fmt(droppedGross)}</td>
+                </tr>
+                <tr>
+                  <td><b>Admitted, not enrolled</b><div className="muted" style={{ fontSize: 11 }}>at the “Enrollment pending” stage</div></td>
+                  <td className="r mono">{admittedNotEnrolled.length}</td>
+                  <td className="r money" style={{ color: "var(--amber)" }}>{fmt(admittedGross)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div className="srcnote" style={{ padding: "0 18px 14px" }}>Observed from current student stages — not a prediction.</div>
           </div>
         </>
       )}
