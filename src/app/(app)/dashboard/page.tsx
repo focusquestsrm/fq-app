@@ -115,6 +115,33 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const droppedGross = dropped.reduce((a, s) => a + s.cost, 0);
   const admittedGross = admittedNotEnrolled.reduce((a, s) => a + s.cost, 0);
 
+  // Student Success metrics (derived from current stages — not predictions).
+  const successOf = (list: typeof students) => {
+    const active = list.filter((s) => s.stage >= STA.enrolled && s.stage <= STA.successEngaged).length; // 7–9
+    const atRisk = list.filter((s) => s.stage === STA.atRisk).length;
+    const completed = list.filter((s) => s.stage === STA.completed || s.stage === STA.revClosed).length;
+    const drop = list.filter((s) => s.stage === STA.dropped).length;
+    const base = active + atRisk + completed + drop;
+    return { active, atRisk, completed, drop, completion: base > 0 ? completed / base : 0 };
+  };
+  const succ = successOf(students);
+
+  // Per-school rollup rows (FQ all-tenant view): journey + success counts.
+  const schoolRows = all
+    ? tenants.map((t) => {
+        const st = students.filter((s) => s.tenant_id === t.id);
+        const ld = leads.filter((l) => l.tenant_id === t.id);
+        const sx = successOf(st);
+        return {
+          t,
+          leadsN: ld.filter((l) => l.stage < STA.enrolled).length,
+          applied: [...ld.map((l) => l.stage), ...st.map((s) => s.stage)].filter((s) => s >= APP_STARTED).length,
+          enrolledN: st.filter((s) => enrolledRev(s.stage)).length,
+          ...sx,
+        };
+      })
+    : [];
+
   return (
     <>
       <div className="pagehead">
@@ -299,7 +326,93 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         </>
       )}
 
-      {(tab === "journey" || tab === "success" || tab === "ai") && (
+      {tab === "journey" && (
+        total === 0 ? (
+          <div className="card"><div className="empty">No Data Available</div></div>
+        ) : (
+          <>
+            <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+              <div style={{ padding: "16px 18px 0" }}><h3>Pipeline by Stage{all ? " — all schools" : ""}</h3></div>
+              <table>
+                <thead><tr><th>Stage</th><th className="r">Count</th><th>Share</th></tr></thead>
+                <tbody>
+                  {STAGES.map((name, i) => (
+                    <tr key={i}>
+                      <td><b>{name}</b></td>
+                      <td className="r mono">{atStage[i]}</td>
+                      <td style={{ minWidth: 180 }}>
+                        <div style={{ height: 8, background: "var(--line)", borderRadius: 4, overflow: "hidden" }}>
+                          <div style={{ width: pct(total > 0 ? atStage[i] / total : 0), height: "100%", background: "var(--gold)" }} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {all && (
+              <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+                <div style={{ padding: "16px 18px 0" }}><h3>Journey by School</h3></div>
+                <table>
+                  <thead><tr><th>School</th><th className="r">Leads</th><th className="r">Applied</th><th className="r">Enrolled</th><th className="r">Completed</th><th className="r">Dropped</th></tr></thead>
+                  <tbody>
+                    {schoolRows.map((r) => (
+                      <tr key={r.t.id}>
+                        <td><b>{r.t.name}</b> <span className="muted" style={{ fontSize: 11 }}>{r.t.short_code}</span></td>
+                        <td className="r mono">{r.leadsN}</td>
+                        <td className="r mono">{r.applied}</td>
+                        <td className="r mono">{r.enrolledN}</td>
+                        <td className="r mono">{r.completed}</td>
+                        <td className="r mono">{r.drop}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )
+      )}
+
+      {tab === "success" && (
+        students.length === 0 ? (
+          <div className="card"><div className="empty">No Data Available</div></div>
+        ) : (
+          <>
+            <div className="cards c4">
+              <div className="card kpi"><div className="lbl">Active</div><div className="val">{succ.active}</div></div>
+              <div className="card kpi"><div className="lbl">At-risk</div><div className="val">{succ.atRisk}</div></div>
+              <div className="card kpi"><div className="lbl">Completed</div><div className="val">{succ.completed}</div></div>
+              <div className="card kpi"><div className="lbl">Completion rate</div><div className="val">{pct(succ.completion)}</div><div className="det">completed ÷ outcomes</div></div>
+            </div>
+            {all && (
+              <div className="card" style={{ padding: 0, overflowX: "auto" }}>
+                <div style={{ padding: "16px 18px 0" }}><h3>Student Success by School</h3></div>
+                <table>
+                  <thead><tr><th>School</th><th className="r">Enrolled</th><th className="r">Active</th><th className="r">At-risk</th><th className="r">Completed</th><th className="r">Dropped</th><th className="r">Completion</th></tr></thead>
+                  <tbody>
+                    {schoolRows.map((r) => (
+                      <tr key={r.t.id}>
+                        <td><b>{r.t.name}</b> <span className="muted" style={{ fontSize: 11 }}>{r.t.short_code}</span></td>
+                        <td className="r mono">{r.enrolledN}</td>
+                        <td className="r mono">{r.active}</td>
+                        <td className="r mono">{r.atRisk}</td>
+                        <td className="r mono">{r.completed}</td>
+                        <td className="r mono">{r.drop}</td>
+                        <td className="r mono">{pct(r.completion)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="srcnote" style={{ padding: "0 18px 14px" }}>Derived from current student stages — not predictions.</div>
+              </div>
+            )}
+          </>
+        )
+      )}
+
+      {tab === "ai" && (
         <div className="card"><div className="empty">No Data Available</div></div>
       )}
     </>
