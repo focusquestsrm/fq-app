@@ -45,6 +45,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
 
   const scope = await getScope(profile, tenants);
   const fq = isFQ(profile.role);
+  const viewAsSchool = !fq; // school portal: school share only (extended by Client View)
   const all = scope === "all";
   const tenant = all ? null : tenants.find((t) => t.id === scope);
   if (!all && !tenant) return <div className="empty">Select a school from the top bar.</div>;
@@ -86,9 +87,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const appsStarted = pipeline.filter((s) => s >= APP_STARTED).length;
   const enrollDenom = leads.length + students.length;
   const enrollRate = enrollDenom > 0 ? enrolled.length / enrollDenom : 0;
-  const atRiskOutstanding = students
-    .filter((s) => s.stage === STA.atRisk)
-    .reduce((a, s) => a + Math.max(0, s.cost - s.collected), 0);
 
   // Per-program metrics (match on id, fall back to name within tenant).
   const progMetrics = activePrograms.map((p) => {
@@ -136,8 +134,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           <div className="cards c4">
             <div className="card kpi"><div className="lbl">Gross revenue</div><div className="val" style={{ fontSize: 22 }}>{fmt(gross)}</div><div className="det">collected {fmt(collected)}</div></div>
             <div className="card kpi"><div className="lbl">School share</div><div className="val" style={{ fontSize: 22 }}>{fmt(schoolRev)}</div></div>
-            <div className="card kpi"><div className="lbl">FocusQuest share</div><div className="val" style={{ fontSize: 22 }}>{fmt(fqRev)}</div></div>
-            <div className="card kpi"><div className="lbl">Revenue at risk</div><div className="val" style={{ fontSize: 22 }}>{fmt(atRiskOutstanding)}</div><div className="det">Advisory · outstanding on at-risk students</div></div>
+            {!viewAsSchool && <div className="card kpi"><div className="lbl">Provider share</div><div className="val" style={{ fontSize: 22 }}>{fmt(providerRev)}</div></div>}
+            {!viewAsSchool && <div className="card kpi"><div className="lbl">FocusQuest share</div><div className="val" style={{ fontSize: 22 }}>{fmt(fqRev)}</div></div>}
           </div>
 
           <div className="card" style={{ padding: 0, overflowX: "auto" }}>
@@ -196,14 +194,23 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         <>
           <div className="card">
             <h3>Live Revenue Snapshot</h3>
-            <div className="split">
-              <div className="s1" style={{ width: pct(gross > 0 ? schoolRev / gross : 0) }}>School {fmt(schoolRev)}</div>
-              <div className="s2" style={{ width: pct(gross > 0 ? providerRev / gross : 0) }}>Provider {fmt(providerRev)}</div>
-              <div className="s3" style={{ width: pct(gross > 0 ? fqRev / gross : 0) }}>FQ {fmt(fqRev)}</div>
-            </div>
-            <div className="srcnote">
-              Revenue figures are calculated based on the configured revenue-sharing model: School {pct(gross > 0 ? schoolRev / gross : 0)} | Provider {pct(gross > 0 ? providerRev / gross : 0)} | FocusQuest {pct(gross > 0 ? fqRev / gross : 0)}
-            </div>
+            {viewAsSchool ? (
+              <>
+                <div className="split"><div className="s1" style={{ width: "100%" }}>School {fmt(schoolRev)}</div></div>
+                <div className="srcnote">Your school&apos;s share of realized gross, from each program&apos;s revenue-sharing model.</div>
+              </>
+            ) : (
+              <>
+                <div className="split">
+                  <div className="s1" style={{ width: pct(gross > 0 ? schoolRev / gross : 0) }}>School {fmt(schoolRev)}</div>
+                  <div className="s2" style={{ width: pct(gross > 0 ? providerRev / gross : 0) }}>Provider {fmt(providerRev)}</div>
+                  <div className="s3" style={{ width: pct(gross > 0 ? fqRev / gross : 0) }}>FQ {fmt(fqRev)}</div>
+                </div>
+                <div className="srcnote">
+                  Revenue figures are calculated based on the configured revenue-sharing model: School {pct(gross > 0 ? schoolRev / gross : 0)} | Provider {pct(gross > 0 ? providerRev / gross : 0)} | FocusQuest {pct(gross > 0 ? fqRev / gross : 0)}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="card" style={{ padding: 0, overflowX: "auto" }}>
@@ -213,12 +220,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
                 <tr>
                   <th>Program</th>{all && <th>School</th>}
                   <th className="r">Students</th><th className="r">Gross</th>
-                  <th className="r">School share</th><th className="r">FQ share</th>
+                  <th className="r">School share</th>
+                  {!viewAsSchool && <th className="r">Provider share</th>}
+                  {!viewAsSchool && <th className="r">FQ share</th>}
                   <th className="r">Projected at goal</th>
                 </tr>
               </thead>
               <tbody>
-                {progMetrics.length === 0 && <tr><td colSpan={all ? 7 : 6}><div className="empty">No active programs yet.</div></td></tr>}
+                {progMetrics.length === 0 && <tr><td colSpan={(all ? 6 : 5) + (viewAsSchool ? 0 : 2)}><div className="empty">No active programs yet.</div></td></tr>}
                 {progMetrics.map((m) => (
                   <tr key={m.p.id}>
                     <td><b>{m.p.name}</b></td>
@@ -226,7 +235,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
                     <td className="r mono">{m.cnt}</td>
                     <td className="r money">{fmt(m.gross)}</td>
                     <td className="r money" style={{ color: "var(--gold-deep)" }}>{fmt(m.school)}</td>
-                    <td className="r money">{fmt(m.fq)}</td>
+                    {!viewAsSchool && <td className="r money">{fmt(m.provider)}</td>}
+                    {!viewAsSchool && <td className="r money">{fmt(m.fq)}</td>}
                     <td className="r money">{fmt(m.projected)}</td>
                   </tr>
                 ))}
@@ -236,7 +246,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
                     <td className="r mono"><b>{progMetrics.reduce((a, m) => a + m.cnt, 0)}</b></td>
                     <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.gross, 0))}</b></td>
                     <td className="r money" style={{ color: "var(--gold-deep)" }}><b>{fmt(progMetrics.reduce((a, m) => a + m.school, 0))}</b></td>
-                    <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.fq, 0))}</b></td>
+                    {!viewAsSchool && <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.provider, 0))}</b></td>}
+                    {!viewAsSchool && <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.fq, 0))}</b></td>}
                     <td className="r money"><b>{fmt(progMetrics.reduce((a, m) => a + m.projected, 0))}</b></td>
                   </tr>
                 )}
@@ -268,7 +279,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       )}
 
       {(tab === "journey" || tab === "success" || tab === "ai") && (
-        <div className="card"><div className="empty">Coming in a later phase.</div></div>
+        <div className="card"><div className="empty">No data available yet.</div></div>
       )}
     </>
   );
