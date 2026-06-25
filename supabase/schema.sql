@@ -87,7 +87,45 @@ create table if not exists leads (
   disposition text default 'Contacted',
   stage       integer not null default 2,        -- "Sent to provider" (LeadHoop routes instantly)
   days        integer not null default 0,
+  email                 text default '',
+  raw_status            text default '',          -- provider's own status words (kept verbatim)
+  notes                 text default '',
+  lead_owner            text default '',
+  projected_enroll_date text default '',
+  projected_start_date  text default '',
   created_at  timestamptz not null default now()
+);
+
+-- ---- data intake (provider report importer) --------------------------------
+create table if not exists import_profiles (
+  id               uuid primary key default gen_random_uuid(),
+  name             text not null,
+  source           text not null default '',
+  header_signature text not null default '',
+  column_map       jsonb not null default '{}'::jsonb,
+  status_map       jsonb not null default '{}'::jsonb,
+  program_map      jsonb not null default '{}'::jsonb,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+create table if not exists import_batches (
+  id              uuid primary key default gen_random_uuid(),
+  tenant_id       uuid references tenants(id) on delete set null,
+  source          text not null default '',
+  file_name       text not null default '',
+  headers         jsonb not null default '[]'::jsonb,
+  rows            jsonb not null default '[]'::jsonb,
+  profile_id      uuid references import_profiles(id) on delete set null,
+  column_map      jsonb not null default '{}'::jsonb,
+  status_map      jsonb not null default '{}'::jsonb,
+  program_map     jsonb not null default '{}'::jsonb,
+  status          text not null default 'draft',
+  inserted        integer not null default 0,
+  updated         integer not null default 0,
+  flagged         integer not null default 0,
+  created_by      uuid references auth.users(id) on delete set null,
+  created_by_name text default '',
+  created_at      timestamptz not null default now()
 );
 
 -- ---- configurable lists (types / providers / payments / dispositions) ------
@@ -187,6 +225,8 @@ alter table leads        enable row level security;
 alter table config_items enable row level security;
 alter table providers    enable row level security;
 alter table fq_costs     enable row level security;
+alter table import_profiles enable row level security;
+alter table import_batches  enable row level security;
 
 -- tenants -------------------------------------------------------------------
 drop policy if exists tenants_read on tenants;
@@ -271,3 +311,11 @@ drop policy if exists fq_costs_write on fq_costs;
 create policy fq_costs_write on fq_costs for all to authenticated
   using ( app_role() in ('superadmin','accountmgr','finance') )
   with check ( app_role() in ('superadmin','accountmgr','finance') );
+
+-- data intake: FocusQuest-only ----------------------------------------------
+drop policy if exists import_profiles_all on import_profiles;
+create policy import_profiles_all on import_profiles for all to authenticated
+  using ( app_is_fq() ) with check ( app_is_fq() );
+drop policy if exists import_batches_all on import_batches;
+create policy import_batches_all on import_batches for all to authenticated
+  using ( app_is_fq() ) with check ( app_is_fq() );

@@ -43,6 +43,24 @@ export const NAV: (NavItem | NavGroup)[] = [
   },
 ];
 
+// Canonical fields a provider column can map to (Data Intake importer).
+// `stage` is derived from raw_status via the status map; the resolved program name
+// is derived from the Product column via the program map — so they aren't here.
+export const CANONICAL_FIELDS: { key: string; label: string }[] = [
+  { key: "first_name", label: "First name" },
+  { key: "last_name", label: "Last name" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
+  { key: "program", label: "Program (Product column)" },
+  { key: "raw_status", label: "Status (Lead Status column)" },
+  { key: "source", label: "Source" },
+  { key: "notes", label: "Notes" },
+  { key: "lead_owner", label: "Lead owner" },
+  { key: "created_at", label: "Created date" },
+  { key: "projected_enroll_date", label: "Projected enroll date" },
+  { key: "projected_start_date", label: "Projected start date" },
+];
+
 export const PALETTE = [
   "#2E5FA3", "#7A3FB8", "#B07414", "#C6A04A", "#1E8E5A",
   "#C0392B", "#5E86C4", "#9B7BC4", "#2E8B7A", "#A0552E",

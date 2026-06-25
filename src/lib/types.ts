@@ -64,11 +64,50 @@ export type Lead = {
   first_name: string;
   last_name: string;
   phone: string;
+  email: string;
   program: string;
   source: string;
   disposition: string;
+  raw_status: string;          // provider's own status words, kept verbatim
   stage: number;
+  notes: string;
+  lead_owner: string;
+  projected_enroll_date: string;
+  projected_start_date: string;
   days: number;
+};
+
+// ---- Data Intake (provider report importer) --------------------------------
+export type ImportProfile = {
+  id: string;
+  name: string;
+  source: string;
+  header_signature: string;
+  column_map: Record<string, string>;   // theirHeader -> canonical field
+  status_map: Record<string, number>;   // rawStatus -> stage index
+  program_map: Record<string, string>;  // productString -> program name
+  created_at: string;
+  updated_at: string;
+};
+
+export type ImportBatch = {
+  id: string;
+  tenant_id: string | null;
+  source: string;
+  file_name: string;
+  headers: string[];
+  rows: Record<string, string>[];
+  profile_id: string | null;
+  column_map: Record<string, string>;
+  status_map: Record<string, number>;
+  program_map: Record<string, string>;
+  status: string;            // draft | imported
+  inserted: number;
+  updated: number;
+  flagged: number;
+  created_by: string | null;
+  created_by_name: string;
+  created_at: string;
 };
 
 export type ConfigItem = {

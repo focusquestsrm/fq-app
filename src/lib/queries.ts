@@ -1,5 +1,8 @@
 import { createClient } from "./supabase/server";
-import type { Profile, Tenant, Program, Student, Lead, ConfigItem, Provider, FQCost } from "./types";
+import type {
+  Profile, Tenant, Program, Student, Lead, ConfigItem, Provider, FQCost,
+  ImportProfile, ImportBatch,
+} from "./types";
 import { cookies } from "next/headers";
 
 export async function getProfile(): Promise<Profile | null> {
@@ -80,6 +83,31 @@ export async function getFQCosts(): Promise<FQCost[]> {
   const supabase = createClient();
   const { data } = await supabase.from("fq_costs").select("*").order("created_at");
   return (data as FQCost[]) ?? [];
+}
+
+// ---- Data Intake (provider report importer) — FQ-only via RLS --------------
+export async function getImportProfiles(): Promise<ImportProfile[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("import_profiles").select("*").order("name");
+  return (data as ImportProfile[]) ?? [];
+}
+
+export async function getImportProfileBySignature(sig: string): Promise<ImportProfile | null> {
+  const supabase = createClient();
+  const { data } = await supabase.from("import_profiles").select("*").eq("header_signature", sig).limit(1);
+  return (data?.[0] as ImportProfile) ?? null;
+}
+
+export async function getImportBatches(): Promise<ImportBatch[]> {
+  const supabase = createClient();
+  const { data } = await supabase.from("import_batches").select("*").order("created_at", { ascending: false });
+  return (data as ImportBatch[]) ?? [];
+}
+
+export async function getImportBatch(id: string): Promise<ImportBatch | null> {
+  const supabase = createClient();
+  const { data } = await supabase.from("import_batches").select("*").eq("id", id).single();
+  return (data as ImportBatch) ?? null;
 }
 
 export async function getConfig(): Promise<ConfigItem[]> {
