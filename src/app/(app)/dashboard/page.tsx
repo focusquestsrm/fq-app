@@ -147,6 +147,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
       <div className="pagehead">
         <div className="eyebrow">{fq ? "FocusQuest" : tenant!.short_code}</div>
         <h2>{all ? "All Schools" : tenant!.name}</h2>
+        {fq && !all && (
+          <form action={setScope} style={{ marginTop: 6 }}>
+            <input type="hidden" name="scope" value="all" />
+            <button className="btn sm ghost">← All Schools</button>
+          </form>
+        )}
       </div>
 
       <div className="tabs">
