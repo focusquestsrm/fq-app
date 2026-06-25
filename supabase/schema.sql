@@ -45,7 +45,7 @@ create table if not exists programs (
   name       text not null,
   provider   text default '',
   cost       numeric not null default 0,
-  goal       integer not null default 0,        -- cohort size
+  goal       integer not null default 25,       -- cohort size (25 students per program)
   cap        integer default 0,
   cert       text default '',
   hours      integer default 0,

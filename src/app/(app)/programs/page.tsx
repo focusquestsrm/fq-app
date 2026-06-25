@@ -55,7 +55,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
           </div>
           <div className="frow f3">
             <div className="field"><label>Tuition ($)</label><input name="cost" type="number" defaultValue={editing?.cost ?? 0} /></div>
-            <div className="field"><label>Cohort goal</label><input name="goal" type="number" defaultValue={editing?.goal ?? 0} /></div>
+            <div className="field"><label>Cohort goal</label><input name="goal" type="number" defaultValue={editing?.goal ?? 25} /></div>
             <div className="field"><label>Enrollment cap</label><input name="cap" type="number" defaultValue={editing?.cap ?? 0} /></div>
           </div>
           <div className="frow f3">
