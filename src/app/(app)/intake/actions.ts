@@ -74,6 +74,29 @@ export async function deleteBatch(formData: FormData) {
   revalidatePath("/intake");
 }
 
+// Clear imported leads AND their import-history rows for a source (optionally one
+// school). This removes the actual dashboard data, not just the history log.
+export async function clearImportedLeads(formData: FormData) {
+  await requireFQAdmin();
+  const source = String(formData.get("source") || "").trim();
+  if (!source) throw new Error("Choose a source to clear.");
+  const tenant_id = String(formData.get("tenant_id") || "") || null;
+  const supabase = createClient();
+
+  let leadsQ = supabase.from("leads").delete().eq("source", source);
+  if (tenant_id) leadsQ = leadsQ.eq("tenant_id", tenant_id);
+  const lerr = (await leadsQ).error;
+  if (lerr) throw new Error(lerr.message);
+
+  let batchQ = supabase.from("import_batches").delete().eq("source", source);
+  if (tenant_id) batchQ = batchQ.eq("tenant_id", tenant_id);
+  const berr = (await batchQ).error;
+  if (berr) throw new Error(berr.message);
+
+  revalidatePath("/intake");
+  revalidatePath("/dashboard");
+}
+
 // ---- mapping edits (each dropdown submits one key) -------------------------
 async function mergeMap(id: string, col: "column_map" | "status_map" | "program_map",
   key: string, value: string, asNumber: boolean) {

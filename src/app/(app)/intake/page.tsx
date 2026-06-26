@@ -1,6 +1,7 @@
 import { getProfile, getTenants, getProviders, getImportProfiles, getImportBatches } from "@/lib/queries";
 import { isFQ } from "@/lib/types";
-import { createBatch, deleteBatch } from "./actions";
+import { createBatch, deleteBatch, clearImportedLeads } from "./actions";
+import { ConfirmButton } from "@/components/ConfirmButton";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 
@@ -94,6 +95,30 @@ export default async function IntakePage() {
           </tbody>
         </table>
       </div>
+
+      {canRun && (
+        <div className="card">
+          <h3>Clear Imported Data</h3>
+          <form action={clearImportedLeads} style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "end" }}>
+            <div className="field" style={{ flex: "1 1 200px" }}><label>Source</label>
+              <select name="source" defaultValue={providers[0]?.name ?? ""}>
+                {providers.length === 0 && <option value="">— no providers —</option>}
+                {providers.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
+              </select>
+            </div>
+            <div className="field" style={{ flex: "1 1 200px" }}><label>School</label>
+              <select name="tenant_id" defaultValue="">
+                <option value="">All schools</option>
+                {tenants.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+            <ConfirmButton className="btn danger" message="Permanently delete the imported leads AND import history for this source/school? This cannot be undone.">
+              Clear imported leads
+            </ConfirmButton>
+          </form>
+          <div className="srcnote">Deletes the actual leads (the dashboard data) <b>and</b> their import-history rows for the selected source. The saved format profile is kept.</div>
+        </div>
+      )}
     </>
   );
 }
