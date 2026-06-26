@@ -1,6 +1,6 @@
 import { getProfile, getTenants, getScope, getPrograms, getStudents, getLeads, getProviders, getClientView } from "@/lib/queries";
 import { isFQ, splitForProvider, ZERO_SPLIT, type Split } from "@/lib/types";
-import { STAGES, STA, enrolledRev } from "@/lib/constants";
+import { STAGES, STA, enrolledRev, PHASES } from "@/lib/constants";
 import { fmt, pct } from "@/lib/format";
 import { setScope } from "@/app/(app)/schools/actions";
 import Link from "next/link";
@@ -88,6 +88,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
   const reached = STAGES.map((_, i) => pipeline.filter((s) => s >= i).length);
   const total = reached[0] || 0;
 
+  // Display-only PHASE rollup (5 phases on top of the 14 stages).
+  const phaseRows = PHASES.map((ph) => ({
+    ph,
+    inPhase: ph.stages.reduce((a, i) => a + atStage[i], 0),
+    reachedP: reached[ph.stages[0]] ?? 0,
+  }));
+
   const activeLeads = leads.filter((l) => l.stage < STA.enrolled && l.stage !== STA.dropped).length;
   const appsStarted = pipeline.filter((s) => s >= APP_STARTED).length;
   const enrollDenom = leads.length + students.length;
@@ -132,11 +139,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
         const st = students.filter((s) => s.tenant_id === t.id);
         const ld = leads.filter((l) => l.tenant_id === t.id);
         const sx = successOf(st);
+        const pipe = [...ld.map((l) => l.stage), ...st.map((s) => s.stage)];
         return {
           t,
-          leadsN: ld.filter((l) => l.stage < STA.enrolled).length,
-          applied: [...ld.map((l) => l.stage), ...st.map((s) => s.stage)].filter((s) => s >= APP_STARTED).length,
           enrolledN: st.filter((s) => enrolledRev(s.stage)).length,
+          phaseCounts: PHASES.map((ph) => pipe.filter((x) => ph.stages.includes(x)).length),
           ...sx,
         };
       })
@@ -193,21 +200,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           </div>
 
           <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-            <div style={{ padding: "16px 18px 0" }}><h3>Enrollment Funnel</h3></div>
+            <div style={{ padding: "16px 18px 0" }}><h3>Enrollment Funnel — by Phase</h3></div>
             <table>
-              <thead><tr><th>Stage</th><th className="r">At this stage</th><th className="r">Reached</th><th>Funnel</th><th className="r">Conversion from previous</th></tr></thead>
+              <thead><tr><th>Phase</th><th className="r">In phase</th><th className="r">Reached</th><th>Funnel</th><th className="r">Conversion from previous</th></tr></thead>
               <tbody>
                 {total === 0 && <tr><td colSpan={5}><div className="empty">No leads or students yet.</div></td></tr>}
-                {total > 0 && STAGES.map((name, i) => {
-                  const conv = i > 0 && reached[i - 1] > 0 ? reached[i] / reached[i - 1] : null;
+                {total > 0 && phaseRows.map((row, i) => {
+                  const prev = phaseRows[i - 1];
+                  const conv = i > 0 && prev.reachedP > 0 ? row.reachedP / prev.reachedP : null;
                   return (
-                    <tr key={i}>
-                      <td><b>{name}</b></td>
-                      <td className="r mono">{atStage[i]}</td>
-                      <td className="r mono">{reached[i]}</td>
+                    <tr key={row.ph.key}>
+                      <td><b>{row.ph.label}</b></td>
+                      <td className="r mono">{row.inPhase}</td>
+                      <td className="r mono">{row.reachedP}</td>
                       <td style={{ minWidth: 160 }}>
                         <div style={{ height: 8, background: "var(--line)", borderRadius: 4, overflow: "hidden" }}>
-                          <div style={{ width: pct(reached[i] / total), height: "100%", background: "var(--gold)" }} />
+                          <div style={{ width: pct(row.reachedP / total), height: "100%", background: "var(--gold)" }} />
                         </div>
                       </td>
                       <td className="r mono">{conv === null ? "—" : pct(conv)}</td>
@@ -337,40 +345,51 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
           <div className="card"><div className="empty">No Data Available</div></div>
         ) : (
           <>
-            <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-              <div style={{ padding: "16px 18px 0" }}><h3>Pipeline by Stage{all ? " — all schools" : ""}</h3></div>
-              <table>
-                <thead><tr><th>Stage</th><th className="r">Count</th><th>Share</th></tr></thead>
-                <tbody>
-                  {STAGES.map((name, i) => (
-                    <tr key={i}>
-                      <td><b>{name}</b></td>
-                      <td className="r mono">{atStage[i]}</td>
-                      <td style={{ minWidth: 180 }}>
-                        <div style={{ height: 8, background: "var(--line)", borderRadius: 4, overflow: "hidden" }}>
-                          <div style={{ width: pct(total > 0 ? atStage[i] / total : 0), height: "100%", background: "var(--gold)" }} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="card">
+              <h3>Journey — Phases{all ? " (all schools)" : ""}</h3>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+                {phaseRows.map((row) => (
+                  <div key={row.ph.key} style={{ flex: "1 1 130px", border: "1px solid var(--line)", borderRadius: 10, padding: "12px 14px", background: "var(--paper)" }}>
+                    <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".08em", color: "var(--muted)" }}>{row.ph.label}</div>
+                    <div style={{ fontFamily: "var(--font-display)", fontSize: 24, marginTop: 2 }}>{row.inPhase}</div>
+                    <div className="muted" style={{ fontSize: 11 }}>{pct(total > 0 ? row.inPhase / total : 0)} of pipeline</div>
+                  </div>
+                ))}
+              </div>
+              <div className="srcnote">Five phases over the 14 underlying stages. Expand a phase below for stage detail.</div>
+            </div>
+
+            <div className="card">
+              <h3>Phase Detail</h3>
+              {phaseRows.map((row) => (
+                <details key={row.ph.key} style={{ borderTop: "1px solid var(--line)", padding: "8px 2px" }}>
+                  <summary style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", fontSize: 13 }}>
+                    <b>{row.ph.label}</b><span className="mono">{row.inPhase}</span>
+                  </summary>
+                  <table style={{ marginTop: 6 }}>
+                    <tbody>
+                      {row.ph.stages.map((si) => (
+                        <tr key={si}>
+                          <td style={{ paddingLeft: 10 }}>{STAGES[si]}</td>
+                          <td className="r mono">{atStage[si]}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </details>
+              ))}
             </div>
 
             {all && (
               <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-                <div style={{ padding: "16px 18px 0" }}><h3>Journey by School</h3></div>
+                <div style={{ padding: "16px 18px 0" }}><h3>Journey by School — Phases</h3></div>
                 <table>
-                  <thead><tr><th>School</th><th className="r">Leads</th><th className="r">Applied</th><th className="r">Enrolled</th><th className="r">Completed</th><th className="r">Dropped</th></tr></thead>
+                  <thead><tr><th>School</th>{PHASES.map((ph) => <th key={ph.key} className="r">{ph.label}</th>)}</tr></thead>
                   <tbody>
                     {schoolRows.map((r) => (
                       <tr key={r.t.id}>
                         <td><b>{r.t.name}</b> <span className="muted" style={{ fontSize: 11 }}>{r.t.short_code}</span></td>
-                        <td className="r mono">{r.leadsN}</td>
-                        <td className="r mono">{r.applied}</td>
-                        <td className="r mono">{r.enrolledN}</td>
-                        <td className="r mono">{r.completed}</td>
-                        <td className="r mono">{r.drop}</td>
+                        {r.phaseCounts.map((c, i) => <td key={i} className="r mono">{c}</td>)}
                       </tr>
                     ))}
                   </tbody>

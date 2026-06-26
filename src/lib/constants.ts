@@ -12,6 +12,20 @@ export const STA = {
 };
 export const enrolledRev = (stage: number) => stage >= STA.enrolled && stage !== STA.dropped;
 
+// Display-only PHASE layer on top of the 14 stages (stages stay the source of
+// truth for status-mapping + revenue). Edit groupings here. Stage = STAGES index.
+export const PHASES: { key: string; label: string; stages: number[] }[] = [
+  { key: "lead", label: "Lead", stages: [0, 1] },
+  { key: "outreach", label: "Outreach", stages: [2, 3] },
+  { key: "application", label: "Application", stages: [4, 5, 6] },
+  { key: "enrolled", label: "Enrolled", stages: [7, 8] },
+  { key: "outcome", label: "Outcome", stages: [9, 10, 11, 12, 13] },
+];
+
+export function stageToPhase(stage: number): string {
+  return PHASES.find((p) => p.stages.includes(stage))?.key ?? "";
+}
+
 export const ROLE_LABELS: Record<Role, string> = {
   superadmin: "FQ Owner",
   accountmgr: "FQ Admin",
