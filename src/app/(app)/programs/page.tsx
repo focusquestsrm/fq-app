@@ -19,6 +19,7 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
   // Catalog is FocusQuest-managed; schools (and FQ in Client View) are read-only.
   const clientView = isFQ(profile.role) && !all && getClientView();
   const canManage = isFQ(profile.role) && !clientView;
+  const viewAsSchool = !isFQ(profile.role) || clientView; // schools never see the provider
   const canAdd = canManage && !all; // need a single school to attach a new program to
   const codeOf = new Map(tenants.map((t) => [t.id, t.short_code] as const));
   const programs = await getPrograms(all ? undefined : scope);
@@ -93,13 +94,13 @@ export default async function ProgramsPage({ searchParams }: { searchParams: { e
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
         <table>
-          <thead><tr><th>Program</th><th>Provider</th><th className="r">Tuition</th><th>Delivery</th><th className="r">Cohort goal</th><th>Cert</th>{canManage && <th></th>}</tr></thead>
+          <thead><tr><th>Program</th>{!viewAsSchool && <th>Provider</th>}<th className="r">Tuition</th><th>Delivery</th><th className="r">Cohort goal</th><th>Cert</th>{canManage && <th></th>}</tr></thead>
           <tbody>
-            {programs.length === 0 && <tr><td colSpan={canManage ? 7 : 6}><div className="empty">No programs yet{canManage ? " — add your first above." : "."}</div></td></tr>}
+            {programs.length === 0 && <tr><td colSpan={canManage ? 7 : 5}><div className="empty">No programs yet{canManage ? " — add your first above." : "."}</div></td></tr>}
             {programs.map((p) => (
               <tr key={p.id}>
                 <td><b>{p.name}</b><div className="muted" style={{ fontSize: 11 }}>{all ? (codeOf.get(p.tenant_id) ?? "—") + " · " : ""}{p.category || "—"}{p.funding?.length ? " · " + p.funding.join(", ") : ""}</div></td>
-                <td>{p.provider || "—"}</td>
+                {!viewAsSchool && <td>{p.provider || "—"}</td>}
                 <td className="r">{canManage ? <InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /> : <span className="money">{fmt(p.cost)}</span>}</td>
                 <td><span className={"chip " + (p.delivery === "Hybrid" ? "amber" : p.delivery === "In-person" ? "gray" : "blue")}>{p.delivery}</span></td>
                 <td className="r">{canManage ? <InlineNumber id={p.id} field="goal" value={p.goal} action={updateProgramField} /> : <span className="mono">{p.goal}</span>}</td>

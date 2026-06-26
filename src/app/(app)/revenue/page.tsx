@@ -49,21 +49,21 @@ export default async function RevenuePage() {
         <table>
           <thead>
             <tr>
-              <th>Program</th><th>Provider</th><th className="r">Cohort size</th><th className="r">Cost / student</th>
+              <th>Program</th>{!viewAsSchool && <th>Provider</th>}<th className="r">Cohort size</th><th className="r">Cost / student</th>
               <th className="r">Gross</th><th className="r">School</th>
               {!viewAsSchool && <th className="r">Provider</th>}
               {!viewAsSchool && <th className="r">FQ</th>}
             </tr>
           </thead>
           <tbody>
-            {programs.length === 0 && <tr><td colSpan={viewAsSchool ? 6 : 8}><div className="empty">No active programs yet.</div></td></tr>}
+            {programs.length === 0 && <tr><td colSpan={viewAsSchool ? 5 : 8}><div className="empty">No active programs yet.</div></td></tr>}
             {programs.map((p) => {
               const gr = p.goal * p.cost;
               const spx = splitOf(p.provider);
               return (
                 <tr key={p.id}>
                   <td><b>{p.name}</b></td>
-                  <td>{p.provider || "—"}</td>
+                  {!viewAsSchool && <td>{p.provider || "—"}</td>}
                   <td className="r">{canManage ? <InlineNumber id={p.id} field="goal" value={p.goal} action={updateProgramField} /> : <span className="mono">{p.goal}</span>}</td>
                   <td className="r">{canManage ? <InlineNumber id={p.id} field="cost" value={p.cost} action={updateProgramField} prefix="$" /> : <span className="money">{fmt(p.cost)}</span>}</td>
                   <td className="r money">{fmt(gr)}</td>
@@ -76,7 +76,7 @@ export default async function RevenuePage() {
             {programs.length > 0 && (
               <tr style={{ borderTop: "2px solid var(--line)" }}>
                 <td><b>Total at full cohorts</b></td>
-                <td></td>
+                {!viewAsSchool && <td></td>}
                 <td className="r mono">{tCohort}</td>
                 <td></td>
                 <td className="r money"><b>{fmt(tGross)}</b></td>
