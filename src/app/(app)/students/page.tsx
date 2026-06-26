@@ -2,8 +2,9 @@ import { getProfile, getTenants, getScope, getPrograms, getStudents, getConfig, 
 import { isFQ } from "@/lib/types";
 import { STAGES, STA } from "@/lib/constants";
 import { fmt } from "@/lib/format";
-import { addStudent, deleteStudent } from "./actions";
+import { saveStudent, deleteStudent } from "./actions";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ function stageChip(stage: number) {
   return <span className={"chip " + tone}>{STAGES[stage]}</span>;
 }
 
-export default async function StudentsPage() {
+export default async function StudentsPage({ searchParams }: { searchParams: { edit?: string } }) {
   const profile = await getProfile();
   if (!profile) redirect("/login");
   const tenants = await getTenants();
@@ -28,6 +29,10 @@ export default async function StudentsPage() {
   const students = await getStudents(all ? undefined : scope);
   const payments = (await getConfig()).filter((c) => c.kind === "payment");
 
+  const editing = canManage && searchParams.edit ? students.find((s) => s.id === searchParams.edit) : undefined;
+  // Program options for the form (scoped to the student's school when editing).
+  const formPrograms = editing ? programs.filter((p) => p.tenant_id === editing.tenant_id) : programs;
+
   return (
     <>
       <div className="pagehead">
@@ -36,39 +41,45 @@ export default async function StudentsPage() {
       </div>
 
       {canManage && (
-      <div className="card">
-        <h3>Add a Student</h3>
-        {all ? (
-          <div className="callout">Showing students for <b>all schools</b>. Select a single school from the top bar to enroll a student.</div>
-        ) : programs.length === 0 ? (
-          <div className="callout">Add at least one program in the Program Catalog before enrolling students.</div>
+        (!editing && all) ? (
+          <div className="card"><h3>Add a Student</h3><div className="callout">Showing students for <b>all schools</b>. Select a single school from the top bar to enroll a student.</div></div>
+        ) : (!editing && programs.length === 0) ? (
+          <div className="card"><h3>Add a Student</h3><div className="callout">Add at least one program in the Program Catalog before enrolling students.</div></div>
         ) : (
-          <form action={addStudent} className="form">
-            <input type="hidden" name="tenant_id" value={scope} />
-            <div className="frow f3">
-              <div className="field"><label>First name</label><input name="first_name" required /></div>
-              <div className="field"><label>Last name</label><input name="last_name" required /></div>
-              <div className="field"><label>Program</label>
-                <select name="program_id">{programs.map((p) => <option key={p.id} value={p.id}>{p.name} — {fmt(p.cost)}</option>)}</select>
+          <div className="card">
+            <h3>{editing ? "Edit Student" : "Add a Student"}</h3>
+            <form action={saveStudent} className="form">
+              <input type="hidden" name="tenant_id" value={editing ? editing.tenant_id : scope} />
+              {editing && <input type="hidden" name="id" value={editing.id} />}
+              <div className="frow f3">
+                <div className="field"><label>First name</label><input name="first_name" defaultValue={editing?.first_name ?? ""} required /></div>
+                <div className="field"><label>Last name</label><input name="last_name" defaultValue={editing?.last_name ?? ""} required /></div>
+                <div className="field"><label>Program</label>
+                  <select name="program_id" defaultValue={editing?.program_id ?? ""}>
+                    {formPrograms.map((p) => <option key={p.id} value={p.id}>{p.name} — {fmt(p.cost)}</option>)}
+                  </select>
+                </div>
               </div>
-            </div>
-            <div className="frow f3">
-              <div className="field"><label>Stage</label>
-                <select name="stage" defaultValue={STA.enrolled}>{STAGES.map((s, i) => <option key={i} value={i}>{s}</option>)}</select>
+              <div className="frow f3">
+                <div className="field"><label>Stage</label>
+                  <select name="stage" defaultValue={editing ? editing.stage : STA.enrolled}>{STAGES.map((s, i) => <option key={i} value={i}>{s}</option>)}</select>
+                </div>
+                <div className="field"><label>Payment source</label>
+                  <select name="payment" defaultValue={editing?.payment ?? ""}>{payments.map((p) => <option key={p.id}>{p.value}</option>)}</select>
+                </div>
+                <div className="field"><label>Collected ($)</label><input name="collected" type="number" defaultValue={editing?.collected ?? 0} /></div>
               </div>
-              <div className="field"><label>Payment source</label>
-                <select name="payment">{payments.map((p) => <option key={p.id}>{p.value}</option>)}</select>
+              <div className="frow f2">
+                <div className="field"><label>Start date</label><input name="start_date" placeholder="MM/DD/YY" defaultValue={editing?.start_date ?? ""} /></div>
+                <div className="field"><label>Expected end</label><input name="end_date" placeholder="MM/DD/YY" defaultValue={editing?.end_date ?? ""} /></div>
               </div>
-              <div className="field"><label>Collected ($)</label><input name="collected" type="number" defaultValue={0} /></div>
-            </div>
-            <div className="frow f2">
-              <div className="field"><label>Start date</label><input name="start_date" placeholder="MM/DD/YY" /></div>
-              <div className="field"><label>Expected end</label><input name="end_date" placeholder="MM/DD/YY" /></div>
-            </div>
-            <div><button className="btn gold">+ Add student</button></div>
-          </form>
-        )}
-      </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn gold">{editing ? "Save changes" : "+ Add student"}</button>
+                {editing && <Link className="btn ghost" href="/students">Cancel</Link>}
+              </div>
+            </form>
+          </div>
+        )
       )}
 
       <div className="card" style={{ padding: 0, overflowX: "auto" }}>
@@ -83,7 +94,14 @@ export default async function StudentsPage() {
                 <td className="r money">{fmt(s.cost)}</td>
                 <td className="r money" style={{ color: "var(--green)" }}>{fmt(s.collected)}</td>
                 <td>{stageChip(s.stage)}</td>
-                {canManage && <td><form action={deleteStudent}><input type="hidden" name="id" value={s.id} /><button className="btn sm danger">✕</button></form></td>}
+                {canManage && (
+                  <td>
+                    <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <Link className="btn sm ghost" href={`/students?edit=${s.id}`}>Edit</Link>
+                      <form action={deleteStudent}><input type="hidden" name="id" value={s.id} /><button className="btn sm danger">✕</button></form>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

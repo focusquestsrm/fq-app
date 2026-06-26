@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/queries";
 import { isFQ } from "@/lib/types";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 // Students are managed by FocusQuest; schools view them read-only.
 async function requireFQ() {
@@ -10,21 +11,21 @@ async function requireFQ() {
   if (!p || !isFQ(p.role)) throw new Error("Students are managed by FocusQuest.");
 }
 
-export async function addStudent(formData: FormData) {
+// Create a new student, or update an existing one when an `id` is present.
+export async function saveStudent(formData: FormData) {
   await requireFQ();
   const supabase = createClient();
-  const tenant_id = String(formData.get("tenant_id"));
+  const id = String(formData.get("id") || "");
   const program_id = String(formData.get("program_id") || "");
 
-  // pull cost/provider/name from the chosen program
+  // Program name / provider / cost are pulled from the chosen catalog program.
   let program = "", provider = "", cost = 0;
   if (program_id) {
     const { data } = await supabase.from("programs").select("name,provider,cost").eq("id", program_id).single();
     if (data) { program = data.name; provider = data.provider; cost = data.cost; }
   }
 
-  await supabase.from("students").insert({
-    tenant_id,
+  const fields = {
     program_id: program_id || null,
     first_name: String(formData.get("first_name") || "").trim(),
     last_name: String(formData.get("last_name") || "").trim(),
@@ -34,10 +35,15 @@ export async function addStudent(formData: FormData) {
     collected: Number(formData.get("collected") || 0),
     start_date: String(formData.get("start_date") || ""),
     end_date: String(formData.get("end_date") || ""),
-    checklist: [],
-    help: [],
-  });
+  };
+
+  if (id) {
+    await supabase.from("students").update(fields).eq("id", id);
+  } else {
+    await supabase.from("students").insert({ tenant_id: String(formData.get("tenant_id")), ...fields, checklist: [], help: [] });
+  }
   revalidatePath("/students");
+  redirect("/students"); // clears the ?edit= param after saving
 }
 
 export async function deleteStudent(formData: FormData) {
