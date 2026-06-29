@@ -226,5 +226,6 @@ export async function runImport(formData: FormData) {
   }
   await supabase.from("import_batches").update({ status: "imported", inserted, updated, flagged }).eq("id", id);
   revalidatePath("/intake");
+  revalidatePath("/dashboard"); // imported/updated lead stages change the Active-leads tile + funnel
   redirect("/intake");
 }
