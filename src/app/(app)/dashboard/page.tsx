@@ -95,7 +95,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: { 
     reachedP: reached[ph.stages[0]] ?? 0,
   }));
 
-  const activeLeads = leads.filter((l) => l.stage < STA.enrolled && l.stage !== STA.dropped).length;
+  // Count from the same combined pipeline (leads + students) the funnel uses, so the
+  // tile and the pre-enrollment phases agree: anyone — lead OR a student record left at
+  // an early stage — sitting below "Enrolled" (and not dropped) is an active lead.
+  const activeLeads = pipeline.filter((s) => s < STA.enrolled && s !== STA.dropped).length;
   const appsStarted = pipeline.filter((s) => s >= APP_STARTED).length;
   const enrollDenom = leads.length + students.length;
   const enrollRate = enrollDenom > 0 ? enrolled.length / enrollDenom : 0;
